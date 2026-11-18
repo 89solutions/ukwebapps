@@ -1,0 +1,5 @@
+User-agent: *
+Allow: /
+Disallow: /sendText.php
+
+Sitemap: https://www.uk-web-apps.co.uk/sitemap.xml
