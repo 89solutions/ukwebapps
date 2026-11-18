@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 800">
+  <rect width="1280" height="800" fill="#eef2f7"/>
+  <g fill="none" stroke="#c7d2e2" stroke-width="2"><path d="M0 220 H1280M0 520 H1280M260 0 V800M760 0 V800M1060 0 V800"/><path d="M0 380 C300 340 520 420 1280 330" stroke-width="10" stroke="#d8e0ec"/></g>
+  <g transform="translate(330 400)">
+    <circle r="260" fill="#2563eb" fill-opacity=".06" stroke="#2563eb" stroke-opacity=".35" stroke-width="3" stroke-dasharray="10 12"/>
+    <circle r="150" fill="#2563eb" fill-opacity=".08" stroke="#2563eb" stroke-opacity=".5" stroke-width="3"/>
+    <circle r="18" fill="#dc2626" stroke="#fff" stroke-width="6"/>
+    <g fill="#0f766e"><circle cx="-90" cy="70" r="12"/><circle cx="110" cy="-60" r="12"/><circle cx="200" cy="150" r="12"/></g>
+    <text y="-290" text-anchor="middle" font-family="Inter, Arial, sans-serif" font-size="22" fill="#475569">3 km alert radius</text>
+  </g>
+  <g transform="translate(760 70)">
+    <rect width="360" height="660" rx="52" fill="#0f172a"/>
+    <rect x="16" y="16" width="328" height="628" rx="40" fill="#fff"/>
+    <g font-family="Inter, Arial, sans-serif">
+      <text x="44" y="84" font-size="20" font-weight="700" fill="#0f172a">Alerts</text>
+      <rect x="36" y="110" width="288" height="210" rx="20" fill="#fef2f2" stroke="#fecaca" stroke-width="2"/>
+      <rect x="56" y="130" width="88" height="28" rx="14" fill="#dc2626"/><text x="100" y="150" font-size="15" font-weight="700" fill="#fff" text-anchor="middle">ACTIVE</text>
+      <text x="56" y="192" font-size="19" font-weight="700" fill="#0f172a">Missing 10 year old male</text>
+      <text x="56" y="222" font-size="16" fill="#475569">Blue jeans, red jumper.</text>
+      <text x="56" y="248" font-size="16" fill="#475569">Last seen 10:00, near school.</text>
+      <text x="56" y="292" font-size="16" font-weight="600" fill="#2563eb">About 1.2 km from you</text>
+      <rect x="36" y="344" width="288" height="56" rx="16" fill="#2563eb"/><text x="180" y="379" font-size="18" font-weight="700" fill="#fff" text-anchor="middle">I'm joining the search</text>
+      <rect x="36" y="416" width="288" height="56" rx="16" fill="#fff" stroke="#cbd5e1" stroke-width="2"/><text x="180" y="451" font-size="18" font-weight="700" fill="#0f172a" text-anchor="middle">Post a sighting</text>
+      <text x="44" y="522" font-size="15" fill="#64748b">Your location is checked on this</text>
+      <text x="44" y="546" font-size="15" fill="#64748b">phone only. It is never sent or stored.</text>
+    </g>
+  </g>
+</svg>

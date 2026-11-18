@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 800">
+  <rect width="1280" height="800" fill="#e8f1ec"/>
+  <g fill="#d5e6dc"><path d="M0 560 C200 500 330 620 520 560 S900 470 1280 540 V800 H0Z"/><circle cx="1100" cy="160" r="120"/><circle cx="180" cy="200" r="90"/></g>
+  <g stroke="#c4d8cc" stroke-width="2" fill="none"><path d="M0 300 H1280M0 450 H1280M320 0 V800M640 0 V800M960 0 V800"/></g>
+  <path d="M190 620 C330 420 470 640 610 430 S900 230 1080 190" fill="none" stroke="#b9c9bf" stroke-width="16" stroke-linecap="round" stroke-dasharray="2 28"/>
+  <path d="M190 620 C330 420 470 640 610 430" fill="none" stroke="#2563eb" stroke-width="14" stroke-linecap="round"/>
+  <circle cx="190" cy="620" r="22" fill="#16a34a" stroke="#fff" stroke-width="6"/>
+  <g transform="translate(1080 190)"><path d="M0 0 c-34-40-34-60-34-74a34 34 0 0 1 68 0c0 14 0 34-34 74z" fill="#dc2626" stroke="#fff" stroke-width="5" transform="translate(0 -6)"/><circle cy="-80" r="12" fill="#fff"/></g>
+  <g transform="translate(610 430)"><circle r="40" fill="#fff" stroke="#2563eb" stroke-width="6"/><text y="15" text-anchor="middle" font-size="44">🏃</text></g>
+  <g font-family="Inter, Arial, sans-serif">
+    <rect x="70" y="70" width="430" height="230" rx="24" fill="#fff" stroke="#dbe3df" stroke-width="2"/>
+    <text x="104" y="124" font-size="30" font-weight="800" fill="#1f2937">Lose 30lbs in weight</text>
+    <text x="104" y="162" font-size="21" fill="#6b7280">Newcastle → Las Vegas · 4,980 miles</text>
+    <rect x="104" y="190" width="362" height="22" rx="11" fill="#e5e7eb"/><rect x="104" y="190" width="181" height="22" rx="11" fill="#2563eb"/>
+    <text x="104" y="260" font-size="22" font-weight="700" fill="#1f2937">15 of 30 lbs · 50%</text>
+    <text x="466" y="260" font-size="20" text-anchor="end" fill="#16a34a">Ahead of plan</text>
+    <rect x="780" y="560" width="430" height="170" rx="24" fill="#fff" stroke="#dbe3df" stroke-width="2"/>
+    <text x="814" y="612" font-size="22" font-weight="700" fill="#1f2937">Estimated finish</text>
+    <text x="814" y="658" font-size="34" font-weight="800" fill="#2563eb">14 March</text>
+    <text x="814" y="696" font-size="19" fill="#6b7280">3 lbs a week · near Kansas City</text>
+  </g>
+</svg>
