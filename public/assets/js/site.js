@@ -64,7 +64,7 @@
         })
         .catch(function () {
           status.className = 'form-status err'; status.hidden = false;
-          status.innerHTML = 'Sorry, that didn’t send. Please email <a href="mailto:info@uk-web-apps.co.uk">info@uk-web-apps.co.uk</a> or call 07976 415159.';
+          status.innerHTML = 'Sorry, that didn’t send. Please email <a href="mailto:info@uk-web-apps.co.uk">info@uk-web-apps.co.uk</a> or call 07723 104412.';
         })
         .finally(function () { submit.disabled = false; submit.textContent = 'Send message'; status.focus(); });
     });

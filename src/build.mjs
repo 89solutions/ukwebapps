@@ -170,7 +170,7 @@ const faqSchema = (list) => ({ '@type': 'FAQPage', mainEntity: list.map(([q, a])
 const pages = {};
 
 pages['/'] = () => {
-  const featured = ['truckfood', 'whitfield-electrical', 'tea-and-company', 'dj-plumbing-heating', 'van-stock', 'residents-documents'].map((s) => bySlug[s]);
+  const featured = ['truckfood', 'whitfield-electrical', 'tea-and-company', 'dj-plumbing-heating', 'van-stock', 'mapgoals', 'residents-documents', 'file-vault', 'missing-child-locator'].map((s) => bySlug[s]);
   return layout({
     path: '/',
     title: 'Web Design & App Development Newcastle | Toffee Apple Web',
@@ -466,7 +466,7 @@ pages['/contact/'] = () => {
   return layout({
     path: '/contact/',
     title: 'Contact Us for a Free Quote | Toffee Apple Web, Newcastle',
-    description: 'Get in touch with Toffee Apple Web for a free, no-obligation quote on a website, web app or mobile app. Call 07976 415159 or email info@uk-web-apps.co.uk.',
+    description: 'Get in touch with Toffee Apple Web for a free, no-obligation quote on a website, web app or mobile app. Call 07723 104412 or email info@uk-web-apps.co.uk.',
     schema: [c.schema, { '@type': 'ContactPage', url: abs('/contact/'), name: 'Contact Toffee Apple Web', about: { '@id': orgId } }],
     body: `
 <section class="hero">
