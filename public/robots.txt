@@ -1,5 +1,8 @@
 User-agent: *
 Allow: /
 Disallow: /sendText.php
+Disallow: /api/
+Disallow: /apps/
+Disallow: /work/van-stock/thanks/
 
 Sitemap: https://www.uk-web-apps.co.uk/sitemap.xml

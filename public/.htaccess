@@ -13,6 +13,14 @@ RewriteCond %{HTTPS} off [OR]
 RewriteCond %{HTTP_HOST} !^www\. [NC]
 RewriteRule ^ https://www.uk-web-apps.co.uk%{REQUEST_URI} [L,R=301]
 
+# Shop internals and private files are never served
+RewriteRule ^api/lib\.php$ - [F,L]
+RewriteRule ^private(/|$) - [F,L]
+
+# Hosted apps for buyers: everything under /apps/<name>/ goes through the access check
+RewriteRule ^apps/([a-z0-9-]+)$ /apps/$1/ [R=301,L]
+RewriteRule ^apps/([a-z0-9-]+)/(.*)$ api/app.php?app=$1&path=$2 [QSA,L]
+
 # Old home page addresses -> new home page
 RewriteCond %{THE_REQUEST} \s/+index\.(php|html)[\s?] [NC]
 RewriteRule ^index\.(php|html)$ / [L,R=301]

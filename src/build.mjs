@@ -70,7 +70,7 @@ const orgSchema = {
 
 const NAV = [['/', 'Home'], ['/services/', 'Services'], ['/work/', 'Our work'], ['/about/', 'About'], [site.blog, 'Blog']];
 
-function layout({ path, title, description, ogImage = '/assets/img/og/home.jpg', schema = [], body, noindex = false }) {
+function layout({ path, title, description, ogImage = '/assets/img/og/home.jpg', schema = [], body, noindex = false, buy = false }) {
   const canonical = abs(path);
   const graph = { '@context': 'https://schema.org', '@graph': [orgSchema, { '@type': 'WebSite', '@id': site.url + '/#website', url: site.url + '/', name: site.name, alternateName: site.altName, publisher: { '@id': orgId }, inLanguage: 'en-GB' }, ...schema] };
   const nav = NAV.map(([href, label]) => `<li><a href="${href}"${href === path || (href !== '/' && path.startsWith(href)) ? ' aria-current="page"' : ''}>${label}</a></li>`).join('');
@@ -116,7 +116,9 @@ ${noindex ? '<meta name="robots" content="noindex">' : `<link rel="canonical" hr
 ${body}
 </main>
 ${footer()}
-<script src="/assets/js/site.js?v=${TODAY}" defer></script>
+<script src="/assets/js/site.js?v=${TODAY}" defer></script>${buy ? `
+<div id="paddle-config" hidden data-environment="${esc(site.paddle.environment)}" data-token="${esc(site.paddle.clientToken)}"></div>
+<script src="/assets/js/buy.js?v=${TODAY}" defer></script>` : ''}
 </body>
 </html>
 `;
@@ -135,7 +137,7 @@ function footer() {
       </div>
       <div><h2>Services</h2><ul>${svc}</ul></div>
       <div><h2>Our work</h2><ul>${work}</ul></div>
-      <div><h2>Company</h2><ul><li><a href="/about/">About us</a></li><li><a href="/work/">Portfolio</a></li><li><a href="${site.blog}">Blog</a></li><li><a href="/contact/">Contact</a></li></ul></div>
+      <div><h2>Company</h2><ul><li><a href="/about/">About us</a></li><li><a href="/work/">Portfolio</a></li><li><a href="${site.blog}">Blog</a></li><li><a href="/contact/">Contact</a></li><li><a href="/terms/">Terms of sale</a></li><li><a href="/refunds/">Refund policy</a></li><li><a href="/privacy/">Privacy policy</a></li></ul></div>
     </div>
     <div class="foot-base"><span>© <span id="year">${new Date().getFullYear()}</span> ${esc(site.name)} (${esc(site.altName)}). All rights reserved.</span><span>Made in the North East with toffee and apples.</span></div>
   </div>
@@ -147,6 +149,8 @@ const crumbs = (items) => ({
   schema: { '@type': 'BreadcrumbList', itemListElement: items.map(([href, label], i) => ({ '@type': 'ListItem', position: i + 1, name: label, item: abs(href) })) },
 });
 
+const canBuy = (p) => Boolean(p.buy && p.buy.priceId && site.paddle.clientToken);
+const buyButton = (p, cls = 'btn btn-primary') => `<button type="button" class="${cls}" data-buy data-price-id="${esc(p.buy.priceId)}" data-thanks="/work/${p.slug}/thanks/">Buy ${esc(p.name)} for ${esc(p.buy.display)}</button>`;
 const statusTag = (p) => `<span class="tag ${p.status === 'Live' ? 'green' : p.status === 'In development' ? 'red' : 'grey'}">${esc(p.status)}</span>`;
 
 const workCard = (p, lazy = true) => `<a class="work-card reveal" href="/work/${p.slug}/" data-kind="${p.kind}">
@@ -350,6 +354,7 @@ for (const [i, p] of projects.entries()) {
     if (isSoftware) {
       item.featureList = p.features.map(([, h]) => h);
       if (p.gallery) item.screenshot = p.gallery.map((g) => abs('/assets/img/work/' + g.img));
+      if (p.buy) item.offers = { '@type': 'Offer', price: p.buy.price.toFixed(2), priceCurrency: p.buy.currency, availability: 'https://schema.org/' + (canBuy(p) ? 'InStock' : 'PreOrder'), url: abs(`/work/${p.slug}/#buy`), seller: { '@id': orgId } };
       if (p.offline) item.availableOnDevice = 'Mobile phone';
     }
     const related = projects.filter((x) => x.slug !== p.slug && x.kind.split(' ').some((k) => p.kind.includes(k))).slice(0, 3);
@@ -358,6 +363,7 @@ for (const [i, p] of projects.entries()) {
       title: `${p.title} | Toffee Apple Web`,
       description: p.metaDescription,
       ogImage: `/assets/img/og/${p.slug}.jpg`,
+      buy: canBuy(p),
       schema: [c.schema, { '@type': 'WebPage', url: abs(`/work/${p.slug}/`), name: p.title, about: item, isPartOf: { '@id': site.url + '/#website' }, primaryImageOfPage: abs('/assets/img/work/' + p.image) }, ...(p.faqs ? [faqSchema(p.faqs)] : [])],
       body: `
 <section class="hero project-hero">
@@ -368,7 +374,7 @@ for (const [i, p] of projects.entries()) {
       <h1>${esc(p.name)}</h1>
       <p class="lead">${esc(p.tagline)}</p>
       <div class="btn-row">
-        ${p.url ? `<a class="btn btn-primary" href="${p.url}" target="_blank" rel="noopener">Visit ${esc(p.urlLabel)} ${icon('external')}</a>` : `<a class="btn btn-primary" href="/contact/?project=${encodeURIComponent(p.name)}">Ask for a demo ${icon('arrow')}</a>`}
+        ${p.buy ? `<a class="btn btn-primary" href="#buy">Buy for ${esc(p.buy.display)} ${icon('arrow')}</a>` : p.url ? `<a class="btn btn-primary" href="${p.url}" target="_blank" rel="noopener">Visit ${esc(p.urlLabel)} ${icon('external')}</a>` : `<a class="btn btn-primary" href="/contact/?project=${encodeURIComponent(p.name)}">Ask for a demo ${icon('arrow')}</a>`}
         <a class="btn btn-ghost" href="/contact/">Build something similar</a>
       </div>
     </div>
@@ -422,6 +428,23 @@ ${p.list ? `<section>
 </section>` : ''}
 ${p.more ? `<section class="section-sand">
   <div class="wrap grid grid-2">${p.more.map(([h, paras]) => `<div class="reveal"><h2 style="font-size:1.6rem">${esc(h)}</h2>${paras.map((x) => `<p>${esc(x)}</p>`).join('')}</div>`).join('')}</div>
+</section>` : ''}
+${p.buy ? `<section class="section-sand" id="buy">
+  <div class="wrap">
+    <div class="price-box reveal">
+      <div>
+        <span class="eyebrow">Get ${esc(p.name)}</span>
+        <h2>${esc(p.name)} for ${esc(p.buy.display)}</h2>
+        <p class="lead">${esc(p.buy.label)}. No subscription, no account.</p>
+        <ul class="check-list">${p.buy.includes.map((x) => `<li>${esc(x)}</li>`).join('')}</ul>
+      </div>
+      <div class="price-card">
+        <p class="price"><span>${esc(p.buy.display)}</span> one-off</p>
+        ${canBuy(p) ? buyButton(p, 'btn btn-primary btn-block') : `<a class="btn btn-primary btn-block" href="/contact/?project=${encodeURIComponent(p.name)}">Register your interest</a><p class="small-print">Online checkout is coming soon.</p>`}
+        <p class="small-print">${icon('lock')} Secure checkout by Paddle, our reseller and Merchant of Record. By buying you agree to our <a href="/terms/">terms of sale</a>. <a href="/refunds/">14-day refund policy</a>.</p>
+      </div>
+    </div>
+  </div>
 </section>` : ''}
 ${p.faqs ? `<section>
   <div class="wrap narrow">
@@ -545,6 +568,92 @@ pages['/contact/'] = () => {
   });
 };
 
+for (const p of projects.filter((x) => x.buy)) {
+  pages[`/work/${p.slug}/thanks/`] = () => layout({
+    path: `/work/${p.slug}/thanks/`,
+    noindex: true,
+    buy: true,
+    title: `Thank you for buying ${p.name} | Toffee Apple Web`,
+    description: `Your ${p.name} download.`,
+    body: `<section class="hero"><div class="wrap narrow center" id="download-box">
+  <span class="eyebrow">Order complete</span>
+  <h1>Thanks for buying ${esc(p.name)}!</h1>
+  <p class="lead" style="max-width:600px;margin-inline:auto">${p.buy.hosted ? `Your personal ${esc(p.name)} link is below. We’ve also emailed it to you,` : `Your download is ready below. We’ve also emailed you the link,`} and Paddle will send your receipt.</p>
+  <p id="download-status" class="form-status" role="status">Confirming your payment…</p>
+  <p class="btn-row" style="justify-content:center"><a id="download-link" class="btn btn-primary" href="#" hidden>${p.buy.hosted ? 'Open' : 'Download'} ${esc(p.name)}</a><button id="copy-link" type="button" class="btn btn-ghost" hidden>Copy link</button></p>
+  ${p.buy.hosted ? `<div id="install-steps" class="card" style="text-align:left;margin-top:2rem" hidden>
+    <h2 style="font-size:1.3rem">Put ${esc(p.name)} on your phone</h2>
+    <ol>
+      <li><strong>Open your link on your phone.</strong> On a computer now? Open the email we’ve sent on your phone instead.</li>
+      <li><strong>iPhone:</strong> in Safari, tap the Share button, then <em>Add to Home Screen</em>.</li>
+      <li><strong>Android:</strong> in Chrome, tap the ⋮ menu, then <em>Add to Home screen</em> or <em>Install app</em>.</li>
+      <li>Open ${esc(p.name)} from your home screen. It works offline from then on.</li>
+    </ol>
+    <p class="small-print" style="text-align:left">Your link is personal to you, so please don’t share it. Keep the email in case you change phone; you can restore your stock from a backup on the new phone.</p>
+  </div>` : ''}
+  <p style="margin-top:2rem"><a href="/work/${p.slug}/">Back to ${esc(p.name)}</a> · <a href="/contact/">Need help?</a></p>
+</div></section>`,
+  });
+}
+
+const legal = (path, title, description, heading, html) => layout({
+  path, title, description,
+  schema: [crumbs([['/', 'Home'], [path, heading]]).schema],
+  body: `<section class="hero"><div class="wrap narrow legal">${crumbs([['/', 'Home'], [path, heading]]).html}<h1>${heading}</h1><p class="lead">Last updated ${new Date(TODAY).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}</p>${html}</div></section>`,
+});
+const LEGAL_NAME = site.legalName || site.name;
+const paddleNote = `<p>Our order process is conducted by our online reseller Paddle.com. Paddle.com is the Merchant of Record for all our orders. Paddle provides all customer service inquiries and handles returns.</p>`;
+
+pages['/terms/'] = () => legal('/terms/', 'Terms of Sale | Toffee Apple Web', 'Terms of sale for apps bought from Toffee Apple Web, including how payment, delivery, licences and refunds work.', 'Terms of sale', `
+<h2>Who we are</h2>
+<p>This website is run by ${esc(LEGAL_NAME)} (“we”, “us”), trading as ${esc(site.name)} and ${esc(site.altName)}. You can contact us at <a href="mailto:${site.email}">${site.email}</a> or on ${site.phone}.</p>
+<h2>Who you are buying from</h2>
+${paddleNote}
+<p>When you buy, you also agree to <a href="https://www.paddle.com/legal/checkout-buyer-terms" rel="noopener" target="_blank">Paddle’s buyer terms</a>. Prices are shown in pounds sterling. Any tax that applies is worked out by Paddle at checkout.</p>
+<h2>What you get</h2>
+<p>After payment you get access to the app you bought:</p>
+<ul>
+<li><strong>Web apps such as Van Stock</strong> are hosted by us. You get a personal link, shown on screen and emailed to you, which opens the app and lets you add it to your phone’s home screen. Once installed, it works offline. The link is for you alone; please don’t share it.</li>
+<li><strong>Downloadable apps</strong> come with a download link that works for 30 days and up to 5 downloads.</li>
+</ul>
+<p>If you have any trouble getting access, contact us and we’ll help. We may switch off access for a link that has been refunded or shared publicly.</p>
+<h2>Your licence</h2>
+<p>We give you a personal, non-exclusive licence to use the app for yourself or your own business. You may not resell, share publicly or redistribute it. We, or our licensors, keep all intellectual property rights in the app.</p>
+<h2>Digital content and your right to cancel</h2>
+<p>Because the app is digital content supplied straight away, you agree at checkout that supply starts immediately. Even so, we offer refunds within 14 days, as explained in our <a href="/refunds/">refund policy</a>.</p>
+<h2>If something goes wrong</h2>
+<p>The app is supplied as described on its page. If it is faulty or not as described, you have rights under the Consumer Rights Act 2015, and we will repair it, replace it or refund you. Nothing in these terms affects your statutory rights.</p>
+<p>We will keep hosted apps available for as long as we sell them. If we ever stop, we’ll email you at least 3 months beforehand so you can back up your data.</p>
+<p>The app stores your data on your own device. Please use the backup feature regularly; we are not responsible for data lost if a device is lost, reset or replaced without a backup.</p>
+<h2>Changes</h2>
+<p>We may update these terms from time to time. The version on this page when you buy applies to your purchase.</p>
+<p>These terms are governed by the law of England and Wales.</p>`);
+
+pages['/refunds/'] = () => legal('/refunds/', 'Refund Policy | Toffee Apple Web', 'Our 14-day refund policy for apps bought from Toffee Apple Web, and how to ask for a refund.', 'Refund policy', `
+<p>We want you to be happy with your purchase. If you’re not, you can ask for a full refund within <strong>14 days</strong> of buying, for any reason.</p>
+<h2>How to ask for a refund</h2>
+<p>Email <a href="mailto:${site.email}">${site.email}</a> with your order number (it starts <code>txn_</code> and is on your receipt), or reply to your Paddle receipt email. You can also request a refund directly from Paddle at <a href="https://paddle.net" rel="noopener" target="_blank">paddle.net</a>.</p>
+${paddleNote}
+<p>Refunds go back to the original payment method, usually within 5 to 10 working days. After a refund, please delete your copy of the app.</p>
+<p>After 14 days, you still have your full rights under the Consumer Rights Act 2015 if the app is faulty or not as described.</p>`);
+
+pages['/privacy/'] = () => legal('/privacy/', 'Privacy Policy | Toffee Apple Web', 'How Toffee Apple Web collects, uses and protects your personal information when you contact us or buy an app.', 'Privacy policy', `
+<p>${esc(LEGAL_NAME)} (trading as ${esc(site.name)}) is responsible for personal information collected through this website. Questions? Email <a href="mailto:${site.email}">${site.email}</a>.</p>
+<h2>What we collect and why</h2>
+<ul>
+<li><strong>Contact form:</strong> your name, phone, email and message, so we can reply to you. Messages are sent to us by text message and email.</li>
+<li><strong>Purchases:</strong> Paddle collects your payment details and billing information as Merchant of Record; we never see your card details. Paddle shares your email address and order number with us so we can send your download link and help with any problems.</li>
+</ul>
+<p>We keep enquiries for as long as needed to deal with them, and order records for up to 6 years for accounting purposes.</p>
+<h2>Who we share it with</h2>
+<p>Paddle (payments), our web host, and our email and SMS providers, only as needed to provide our service. We never sell your information. See <a href="https://www.paddle.com/legal/privacy" rel="noopener" target="_blank">Paddle’s privacy policy</a> for how Paddle handles your data.</p>
+<h2>Cookies</h2>
+<p>This website doesn’t use advertising or tracking cookies. Paddle’s checkout may set cookies needed to process your payment securely. Fonts are loaded from Google Fonts.</p>
+<h2>Our apps</h2>
+<p>Our apps such as Van Stock store your data on your own device. It isn’t sent to us.</p>
+<h2>Your rights</h2>
+<p>Under UK data protection law you can ask to see, correct or delete the personal information we hold about you, or object to how we use it. Email us and we’ll respond within one month. You can also complain to the Information Commissioner’s Office at <a href="https://ico.org.uk" rel="noopener" target="_blank">ico.org.uk</a>.</p>`);
+
 pages['/404.html'] = () => layout({
   path: '/404.html',
   noindex: true,
@@ -564,7 +673,7 @@ const urls = [];
 for (const [path, fn] of Object.entries(pages)) {
   const file = path.endsWith('.html') ? path.slice(1) : path.slice(1) + 'index.html';
   write(file, fn());
-  if (!path.endsWith('.html')) urls.push(path);
+  if (!path.endsWith('.html') && !path.endsWith('/thanks/')) urls.push(path);
 }
 
 const prio = (u) => (u === '/' ? '1.0' : u.split('/').length > 3 ? '0.7' : '0.8');
@@ -580,6 +689,9 @@ ${urls.map((u) => {
 write('robots.txt', `User-agent: *
 Allow: /
 Disallow: /sendText.php
+Disallow: /api/
+Disallow: /apps/
+Disallow: /work/van-stock/thanks/
 
 Sitemap: ${abs('/sitemap.xml')}
 `);

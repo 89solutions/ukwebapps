@@ -1,0 +1,2 @@
+# Only needed if this folder has to live inside the web root. Blocks all web access.
+Require all denied
