@@ -346,13 +346,18 @@ for (const [i, p] of projects.entries()) {
     const item = isSoftware
       ? { '@type': p.kind.includes('mobile') && !p.kind.includes('webapp') ? 'MobileApplication' : 'WebApplication', name: p.name, description: p.tagline, applicationCategory: 'BusinessApplication', operatingSystem: p.kind === 'mobile' ? 'Android, iOS' : 'Any (web browser)', creator: { '@id': orgId }, image: abs('/assets/img/work/' + p.image), ...(p.url ? { url: p.url } : {}) }
       : { '@type': 'WebSite', name: p.name, description: p.tagline, url: p.url, creator: { '@id': orgId }, image: abs('/assets/img/work/' + p.image) };
+    if (isSoftware) {
+      item.featureList = p.features.map(([, h]) => h);
+      if (p.gallery) item.screenshot = p.gallery.map((g) => abs('/assets/img/work/' + g.img));
+      if (p.offline) item.availableOnDevice = 'Mobile phone';
+    }
     const related = projects.filter((x) => x.slug !== p.slug && x.kind.split(' ').some((k) => p.kind.includes(k))).slice(0, 3);
     return layout({
       path: `/work/${p.slug}/`,
       title: `${p.title} | Toffee Apple Web`,
       description: p.metaDescription,
       ogImage: `/assets/img/og/${p.slug}.jpg`,
-      schema: [c.schema, { '@type': 'WebPage', url: abs(`/work/${p.slug}/`), name: p.title, about: item, isPartOf: { '@id': site.url + '/#website' }, primaryImageOfPage: abs('/assets/img/work/' + p.image) }],
+      schema: [c.schema, { '@type': 'WebPage', url: abs(`/work/${p.slug}/`), name: p.title, about: item, isPartOf: { '@id': site.url + '/#website' }, primaryImageOfPage: abs('/assets/img/work/' + p.image) }, ...(p.faqs ? [faqSchema(p.faqs)] : [])],
       body: `
 <section class="hero project-hero">
   <div class="wrap">
@@ -378,7 +383,7 @@ for (const [i, p] of projects.entries()) {
   <div class="wrap split top">
     <div>
       <span class="eyebrow">The project</span>
-      <h2>About ${esc(p.name)}</h2>
+      <h2>${esc(p.introHeading || 'About ' + p.name)}</h2>
       ${p.intro.map((x) => `<p>${esc(x)}</p>`).join('')}
       ${p.note ? `<p class="note">${esc(p.note)}</p>` : ''}
     </div>
@@ -391,10 +396,38 @@ for (const [i, p] of projects.entries()) {
 </section>
 <section class="section-sand">
   <div class="wrap">
-    <div class="section-head"><span class="eyebrow">Key features</span><h2>What ${esc(p.name)} does</h2></div>
+    <div class="section-head"><span class="eyebrow">Key features</span><h2>${esc(p.featuresHeading || 'What ' + p.name + ' does')}</h2></div>
     <div class="grid grid-2">${p.features.map(([ic, h, t]) => `<div class="card feature reveal"><span class="icon">${icon(ic)}</span><div><h3>${esc(h)}</h3><p>${esc(t)}</p></div></div>`).join('')}</div>
   </div>
 </section>
+${p.gallery ? `<section>
+  <div class="wrap">
+    <div class="section-head"><span class="eyebrow">Screenshots</span><h2>${esc(p.galleryHeading || p.name + ' screenshots')}</h2>${p.galleryIntro ? `<p class="lead">${esc(p.galleryIntro)}</p>` : ''}</div>
+    <div class="gallery">${p.gallery.map((g) => `<figure class="reveal"><div class="phone-frame"><img src="/assets/img/work/${g.img}" alt="${esc(g.alt)}" width="480" height="1038" loading="lazy" decoding="async"></div><figcaption><strong>${esc(g.title)}</strong>${esc(g.caption)}</figcaption></figure>`).join('')}</div>
+  </div>
+</section>` : ''}
+${p.steps ? `<section class="section-dark">
+  <div class="wrap">
+    <div class="section-head"><span class="eyebrow">How it works</span><h2>${esc(p.stepsHeading || 'How ' + p.name + ' works')}</h2></div>
+    <ol class="steps grid grid-4">${p.steps.map(([h, t]) => `<li class="reveal"><h3>${esc(h)}</h3><p>${esc(t)}</p></li>`).join('')}</ol>
+  </div>
+</section>` : ''}
+${p.list ? `<section>
+  <div class="wrap">
+    <div class="section-head"><span class="eyebrow">${esc(p.list.eyebrow)}</span><h2>${esc(p.list.heading)}</h2><p class="lead">${esc(p.list.intro)}</p></div>
+    <ul class="list-grid">${p.list.items.map(([n, d]) => `<li><strong>${esc(n)}</strong><span>${esc(d)}</span></li>`).join('')}</ul>
+    ${p.list.footer ? `<p style="margin-top:1.5rem">${esc(p.list.footer)}</p>` : ''}
+  </div>
+</section>` : ''}
+${p.more ? `<section class="section-sand">
+  <div class="wrap grid grid-2">${p.more.map(([h, paras]) => `<div class="reveal"><h2 style="font-size:1.6rem">${esc(h)}</h2>${paras.map((x) => `<p>${esc(x)}</p>`).join('')}</div>`).join('')}</div>
+</section>` : ''}
+${p.faqs ? `<section>
+  <div class="wrap narrow">
+    <div class="section-head center"><span class="eyebrow">Questions</span><h2>${esc(p.name)} FAQs</h2></div>
+    ${faqBlock(p.faqs)}
+  </div>
+</section>` : ''}
 ${related.length ? `<section>
   <div class="wrap">
     <div class="section-head"><span class="eyebrow">More like this</span><h2>Related projects</h2></div>
@@ -538,7 +571,8 @@ write('sitemap.xml', `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
 ${urls.map((u) => {
   const p = u.startsWith('/work/') && u !== '/work/' ? bySlug[u.split('/')[2]] : null;
-  return `  <url><loc>${abs(u)}</loc><lastmod>${TODAY}</lastmod><priority>${prio(u)}</priority>${p ? `<image:image><image:loc>${abs('/assets/img/work/' + p.image)}</image:loc></image:image>` : ''}</url>`;
+  const imgs = p ? [p.image, ...(p.gallery || []).map((g) => g.img)] : [];
+  return `  <url><loc>${abs(u)}</loc><lastmod>${TODAY}</lastmod><priority>${prio(u)}</priority>${imgs.map((i) => `<image:image><image:loc>${abs('/assets/img/work/' + i)}</image:loc></image:image>`).join('')}</url>`;
 }).join('\n')}
 </urlset>
 `);

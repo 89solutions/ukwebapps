@@ -263,3 +263,20 @@ section { padding: clamp(3.5rem, 8vw, 6rem) 0; }
 /* Reveal on scroll (JS adds .js to <html>) */
 .js .reveal { opacity: 0; transform: translateY(16px); transition: opacity .6s ease, transform .6s ease; }
 .js .reveal.in { opacity: 1; transform: none; }
+
+/* Project screenshot gallery (phone screens) */
+.gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 2rem 1.5rem; }
+.gallery figure { margin: 0; }
+.phone-frame { border: 7px solid var(--ink); border-radius: 28px; overflow: hidden; background: #fff; box-shadow: var(--shadow-lg); }
+.phone-frame img { width: 100%; }
+.gallery figcaption { margin-top: .9rem; font-size: .93rem; color: var(--muted); line-height: 1.5; }
+.gallery figcaption strong { display: block; color: var(--ink); font-size: 1rem; }
+@media (max-width: 520px) { .gallery { grid-template-columns: 1fr 1fr; gap: 1.5rem 1rem; } .phone-frame { border-width: 5px; border-radius: 20px; } }
+
+/* Simple two-column list (e.g. trade lists) */
+.list-grid { list-style: none; padding: 0; margin: 0; display: grid; grid-template-columns: repeat(3, 1fr); gap: .8rem; }
+.list-grid li { background: #fff; border: 1px solid var(--line); border-radius: var(--radius-sm); padding: .9rem 1.1rem; display: flex; justify-content: space-between; gap: 1rem; align-items: baseline; }
+.list-grid strong { color: var(--ink); }
+.list-grid span { color: var(--muted); font-size: .9rem; white-space: nowrap; }
+@media (max-width: 900px) { .list-grid { grid-template-columns: 1fr 1fr; } }
+@media (max-width: 560px) { .list-grid { grid-template-columns: 1fr; } }
