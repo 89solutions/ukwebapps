@@ -1,3 +1,6 @@
 node_modules/
 .DS_Store
 *.log
+# Real shop config, orders database and product files: never commit
+private/
+public/private/
