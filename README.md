@@ -61,9 +61,14 @@ Van Stock is sold for £12 through [Paddle](https://www.paddle.com) (Paddle Bill
 ### How it works
 
 1. The buyer clicks **Buy Van Stock for £12** on `/work/van-stock/`. Paddle's checkout opens over the page (`public/assets/js/buy.js`).
-2. After payment they're sent to `/work/van-stock/thanks/?txn=…`. That page calls `/api/claim.php`, which checks the order with Paddle's API and shows a **Download** button.
-3. Paddle also calls `/api/paddle-webhook.php`, which emails the buyer their link, so it still arrives if they close the browser.
-4. `/api/download.php?token=…` sends the file from the private folder. Links expire after 30 days and 5 downloads (configurable).
+2. After payment they're sent to `/work/van-stock/thanks/?txn=…`. That page calls `/api/claim.php`, which checks the order with Paddle's API and shows an **Open Van Stock** button with install steps.
+3. Paddle also calls `/api/paddle-webhook.php`, which emails the buyer their personal link, so it still arrives if they close the browser.
+4. The link is `/apps/van-stock/?key=…`. `.htaccess` sends everything under `/apps/van-stock/` through `/api/app.php`. That script checks the key, sets a cookie so the app's files load, and serves the app from `private/apps/van-stock/`. The key is written into the app's start address too, so the home-screen app keeps access on iPhone, where it doesn't share Safari's cookies. Once installed, the app works offline as normal.
+5. Anyone without a valid key sees a "Van Stock is for customers" page with a link to buy it.
+
+To switch off a buyer's access (e.g. after a refund), set `revoked = 1` on their row in `private/orders.sqlite`. Copies already installed keep working offline, but can't refresh from the server.
+
+Products can also be sold as file downloads instead: give them a `file` rather than an `app` in `private/config.php`. `/api/download.php?token=…` then serves the file, with links that expire after 30 days and 5 downloads (configurable).
 
 Orders are saved in `private/orders.sqlite`. Needs PHP 8.1+ with `pdo_sqlite` and `curl`, and the host must be able to send mail with PHP `mail()`.
 
@@ -76,10 +81,14 @@ Orders are saved in `private/orders.sqlite`. Needs PHP 8.1+ with `pdo_sqlite` an
    - **Developer tools > Authentication:** create a **client-side token** and an **API key**.
    - **Developer tools > Notifications:** add a destination `https://www.uk-web-apps.co.uk/api/paddle-webhook.php` for the `transaction.completed` event, and copy its secret key.
 3. **Website settings** in `src/data.mjs`: put the client-side token in `site.paddle.clientToken` and the price ID (`pri_…`) in the Van Stock `buy.priceId`, then run `node src/build.mjs`. The Buy button appears once both are set. Until then the page shows "Register your interest".
-4. **Private folder:** copy `private-example/` to the server as `private/`, **one level above the web root** (next to `public_html`, not inside it). Fill in `private/config.php` with the API key, webhook secret and price ID. Put the file buyers will download in `private/files/` (e.g. `van-stock.zip`). If your host doesn't allow folders outside the web root, put it at `public_html/private/`; `.htaccess` blocks it from the web.
-5. **Test a purchase** in the sandbox with Paddle's test card `4242 4242 4242 4242`. Check the download works and the email arrives.
+4. **Private folder:** copy `private-example/` to the server as `private/`, **one level above the web root** (next to `public_html`, not inside it). Fill in `private/config.php` with the API key, webhook secret and price ID. Then put the Van Stock app in `private/apps/van-stock/`: run `src/tools/package-van-stock.sh /path/to/vans` and upload the contents of `dist/apps/van-stock/`. If your host doesn't allow folders outside the web root, put it at `public_html/private/`; `.htaccess` blocks it from the web.
+5. **Test a purchase** in the sandbox with Paddle's test card `4242 4242 4242 4242`. Check the link opens Van Stock, that it installs to a phone's home screen (try an iPhone and an Android if you can), and that the email arrives.
 6. **Go live:** repeat step 2 in your live Paddle account. Set `environment: 'production'` with the live client token and live price ID in `src/data.mjs`, and `'production'` with the live API key, webhook secret and price ID in `private/config.php`. Rebuild and upload.
 
 To sell another app, add a `buy` block to its project in `src/data.mjs` and a matching entry under `products` in `private/config.php`.
+
+### Updating the hosted Van Stock
+
+When Van Stock changes, re-run `src/tools/package-van-stock.sh /path/to/vans` and upload the files to `private/apps/van-stock/` again. Buyers get the update the next time they open the app with signal. Remember to bump `CACHE` in the app's `sw.js` with each release, as usual.
 
 **Never commit `private/`**: it holds secret keys and customer emails. It's in `.gitignore`.

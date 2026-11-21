@@ -47,6 +47,9 @@ function db(): PDO
             emailed INTEGER NOT NULL DEFAULT 0,
             created_at INTEGER NOT NULL
         )');
+        // Set revoked = 1 (e.g. after a refund) to switch off a buyer's app access.
+        $cols = array_column($pdo->query('PRAGMA table_info(orders)')->fetchAll(PDO::FETCH_ASSOC), 'name');
+        if (!in_array('revoked', $cols, true)) $pdo->exec('ALTER TABLE orders ADD COLUMN revoked INTEGER NOT NULL DEFAULT 0');
     }
     return $pdo;
 }
@@ -101,9 +104,14 @@ function record_order(array $txn, array $product): array
     return $stmt->fetch(PDO::FETCH_ASSOC);
 }
 
-function download_url(array $order): string
+/** Hosted apps get a personal link to the app; file products get a download link. */
+function access_url(array $order): string
 {
-    return rtrim(config()['site_url'], '/') . '/api/download.php?token=' . $order['token'];
+    $product = config()['products'][$order['product']];
+    $site = rtrim(config()['site_url'], '/');
+    return !empty($product['app'])
+        ? $site . '/apps/' . $product['app'] . '/?key=' . $order['token']
+        : $site . '/api/download.php?token=' . $order['token'];
 }
 
 /** Emails the download link once per order. */
@@ -113,16 +121,18 @@ function email_order(array $order): void
     $cfg = config();
     $product = $cfg['products'][$order['product']];
     $days = (int) $cfg['link_days'];
+    $intro = !empty($product['app'])
+        ? "Here's your personal link to {$product['name']}. Open it on your phone:\n"
+        : "Download it here (the link works for {$days} days and up to {$cfg['max_downloads']} downloads):\n";
     $body = "Thanks for buying {$product['name']}!\n\n"
-        . "Download it here (the link works for {$days} days and up to {$cfg['max_downloads']} downloads):\n"
-        . download_url($order) . "\n\n"
+        . $intro . access_url($order) . "\n\n"
         . ($product['instructions'] ?? '') . "\n\n"
         . "Your order number is {$order['transaction_id']}. Your receipt comes separately from Paddle, our payment provider.\n\n"
         . "Any questions, just reply to this email.\n\n{$cfg['shop_name']}\n{$cfg['site_url']}\n";
     $headers = 'From: ' . $cfg['shop_name'] . ' <' . $cfg['from_email'] . ">\r\n"
         . 'Reply-To: ' . $cfg['from_email'] . "\r\n"
         . "Content-Type: text/plain; charset=UTF-8\r\n";
-    if (mail($order['email'], 'Your ' . $product['name'] . ' download', $body, $headers)) {
+    if (mail($order['email'], 'Your ' . $product['name'] . (!empty($product['app']) ? ' link' : ' download'), $body, $headers)) {
         db()->prepare('UPDATE orders SET emailed = 1 WHERE transaction_id = ?')->execute([$order['transaction_id']]);
     }
 }

@@ -55,20 +55,28 @@
     var status = document.getElementById('download-status');
     var tries = 0;
     var show = function (html, cls) { status.innerHTML = html; status.className = 'form-status ' + (cls || ''); };
-    if (!txn) { show('We couldn’t find your order number. Your download link has also been emailed to you.', 'err'); return; }
+    if (!txn) { show('We couldn’t find your order number. Your link has also been emailed to you.', 'err'); return; }
     var check = function () {
       fetch('/api/claim.php?txn=' + encodeURIComponent(txn), { headers: { Accept: 'application/json' } })
         .then(function (r) { return r.json().then(function (j) { return { ok: r.ok, status: r.status, j: j }; }); })
         .then(function (res) {
           if (res.status === 202 && tries++ < 15) { show('Confirming your payment…'); setTimeout(check, 2000); return; }
-          if (!res.ok || !res.j.download_url) throw new Error(res.j.error || 'Not ready');
+          if (!res.ok || !res.j.url) throw new Error(res.j.error || 'Not ready');
           var a = document.getElementById('download-link');
-          a.href = res.j.download_url; a.hidden = false;
-          show('Payment confirmed. ' + (res.j.email ? 'We’ve also emailed the link to <strong>' + res.j.email.replace(/</g, '&lt;') + '</strong>. ' : '') +
-            'It works for ' + res.j.link_days + ' days and up to ' + res.j.max_downloads + ' downloads.', 'ok');
+          var mail = res.j.email ? 'We’ve also emailed it to <strong>' + res.j.email.replace(/</g, '&lt;') + '</strong>. ' : '';
+          a.href = res.j.url; a.hidden = false;
+          if (res.j.type === 'app') {
+            a.textContent = 'Open ' + res.j.product;
+            var copy = document.getElementById('copy-link');
+            if (copy) { copy.hidden = false; copy.onclick = function () { navigator.clipboard.writeText(res.j.url).then(function () { copy.textContent = 'Link copied'; }); }; }
+            var steps = document.getElementById('install-steps'); if (steps) steps.hidden = false;
+            show('Payment confirmed. This is your personal link. ' + mail + 'Keep the email safe in case you change phone.', 'ok');
+          } else {
+            show('Payment confirmed. ' + mail + 'The link works for ' + res.j.link_days + ' days and up to ' + res.j.max_downloads + ' downloads.', 'ok');
+          }
         })
         .catch(function (e) {
-          show('We couldn’t confirm your download just yet (' + e.message + '). Your link will arrive by email shortly. Order number: <strong>' + txn.replace(/</g, '&lt;') + '</strong>.', 'err');
+          show('We couldn’t confirm your order just yet (' + e.message + '). Your link will arrive by email shortly. Order number: <strong>' + txn.replace(/</g, '&lt;') + '</strong>.', 'err');
         });
     };
     check();

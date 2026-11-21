@@ -22,13 +22,19 @@ return [
     'max_downloads' => 5,
 
     // One entry per product. price_id comes from Paddle > Catalog > Products > (product) > Prices.
-    // The file goes in private/files/.
+    // Hosted web apps: set 'app' and put the app's files in private/apps/<app>/. Buyers get a personal
+    //   link to https://www.uk-web-apps.co.uk/apps/<app>/?key=...
+    // Downloads: set 'file' instead and put the file in private/files/.
     'products' => [
         'van-stock' => [
             'name' => 'Van Stock',
             'price_id' => 'pri_xxxxxxxxxxxxxxxxxxxxxxxxxx',
-            'file' => 'van-stock.zip',
-            'instructions' => "How to install: (write the steps for this product here).",
+            'app' => 'van-stock',
+            'instructions' => "To put Van Stock on your phone:\n"
+                . "- iPhone: open the link in Safari, tap the Share button, then Add to Home Screen.\n"
+                . "- Android: open the link in Chrome, tap the menu, then Add to Home screen or Install app.\n"
+                . "Then open Van Stock from your home screen. It works offline.\n\n"
+                . "This link is personal to you, so please keep this email and don't share it.",
         ],
     ],
 ];

@@ -578,9 +578,19 @@ for (const p of projects.filter((x) => x.buy)) {
     body: `<section class="hero"><div class="wrap narrow center" id="download-box">
   <span class="eyebrow">Order complete</span>
   <h1>Thanks for buying ${esc(p.name)}!</h1>
-  <p class="lead" style="max-width:600px;margin-inline:auto">Your download is ready below. We’ve also emailed you the link, and Paddle will send your receipt.</p>
+  <p class="lead" style="max-width:600px;margin-inline:auto">${p.buy.hosted ? `Your personal ${esc(p.name)} link is below. We’ve also emailed it to you,` : `Your download is ready below. We’ve also emailed you the link,`} and Paddle will send your receipt.</p>
   <p id="download-status" class="form-status" role="status">Confirming your payment…</p>
-  <p><a id="download-link" class="btn btn-primary" href="#" hidden>Download ${esc(p.name)}</a></p>
+  <p class="btn-row" style="justify-content:center"><a id="download-link" class="btn btn-primary" href="#" hidden>${p.buy.hosted ? 'Open' : 'Download'} ${esc(p.name)}</a><button id="copy-link" type="button" class="btn btn-ghost" hidden>Copy link</button></p>
+  ${p.buy.hosted ? `<div id="install-steps" class="card" style="text-align:left;margin-top:2rem" hidden>
+    <h2 style="font-size:1.3rem">Put ${esc(p.name)} on your phone</h2>
+    <ol>
+      <li><strong>Open your link on your phone.</strong> On a computer now? Open the email we’ve sent on your phone instead.</li>
+      <li><strong>iPhone:</strong> in Safari, tap the Share button, then <em>Add to Home Screen</em>.</li>
+      <li><strong>Android:</strong> in Chrome, tap the ⋮ menu, then <em>Add to Home screen</em> or <em>Install app</em>.</li>
+      <li>Open ${esc(p.name)} from your home screen. It works offline from then on.</li>
+    </ol>
+    <p class="small-print" style="text-align:left">Your link is personal to you, so please don’t share it. Keep the email in case you change phone; you can restore your stock from a backup on the new phone.</p>
+  </div>` : ''}
   <p style="margin-top:2rem"><a href="/work/${p.slug}/">Back to ${esc(p.name)}</a> · <a href="/contact/">Need help?</a></p>
 </div></section>`,
   });
@@ -601,13 +611,19 @@ pages['/terms/'] = () => legal('/terms/', 'Terms of Sale | Toffee Apple Web', 'T
 ${paddleNote}
 <p>When you buy, you also agree to <a href="https://www.paddle.com/legal/checkout-buyer-terms" rel="noopener" target="_blank">Paddle’s buyer terms</a>. Prices are shown in pounds sterling. Any tax that applies is worked out by Paddle at checkout.</p>
 <h2>What you get</h2>
-<p>After payment you get a link to download the app you bought. The link is shown on screen and emailed to you, and works for 30 days and up to 5 downloads. If you have any trouble downloading, contact us and we’ll help.</p>
+<p>After payment you get access to the app you bought:</p>
+<ul>
+<li><strong>Web apps such as Van Stock</strong> are hosted by us. You get a personal link, shown on screen and emailed to you, which opens the app and lets you add it to your phone’s home screen. Once installed, it works offline. The link is for you alone; please don’t share it.</li>
+<li><strong>Downloadable apps</strong> come with a download link that works for 30 days and up to 5 downloads.</li>
+</ul>
+<p>If you have any trouble getting access, contact us and we’ll help. We may switch off access for a link that has been refunded or shared publicly.</p>
 <h2>Your licence</h2>
 <p>We give you a personal, non-exclusive licence to use the app for yourself or your own business. You may not resell, share publicly or redistribute it. We, or our licensors, keep all intellectual property rights in the app.</p>
 <h2>Digital content and your right to cancel</h2>
 <p>Because the app is digital content supplied straight away, you agree at checkout that supply starts immediately. Even so, we offer refunds within 14 days, as explained in our <a href="/refunds/">refund policy</a>.</p>
 <h2>If something goes wrong</h2>
 <p>The app is supplied as described on its page. If it is faulty or not as described, you have rights under the Consumer Rights Act 2015, and we will repair it, replace it or refund you. Nothing in these terms affects your statutory rights.</p>
+<p>We will keep hosted apps available for as long as we sell them. If we ever stop, we’ll email you at least 3 months beforehand so you can back up your data.</p>
 <p>The app stores your data on your own device. Please use the backup feature regularly; we are not responsible for data lost if a device is lost, reset or replaced without a backup.</p>
 <h2>Changes</h2>
 <p>We may update these terms from time to time. The version on this page when you buy applies to your purchase.</p>
@@ -674,6 +690,7 @@ write('robots.txt', `User-agent: *
 Allow: /
 Disallow: /sendText.php
 Disallow: /api/
+Disallow: /apps/
 Disallow: /work/van-stock/thanks/
 
 Sitemap: ${abs('/sitemap.xml')}

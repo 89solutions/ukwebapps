@@ -4,3 +4,4 @@ node_modules/
 # Real shop config, orders database and product files: never commit
 private/
 public/private/
+dist/

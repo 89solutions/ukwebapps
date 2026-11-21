@@ -107,8 +107,9 @@ export const projects = [
     // Sold through Paddle. priceId comes from Paddle > Catalog > Products > Van Stock > Prices.
     buy: {
       price: 12, currency: 'GBP', display: '£12', priceId: '',
+      hosted: true, // buyers get a personal link to the copy we host at /apps/van-stock/
       label: 'One-off payment',
-      includes: ['Van Stock for your phone, yours to keep', 'All 15 trade lists and barcode scanning', 'Works offline, no account or subscription', 'Download link by email straight away'],
+      includes: ['Your own personal Van Stock link, straight away', 'Installs to your phone’s home screen in seconds', 'All 15 trade lists and barcode scanning', 'Works offline, no account or subscription'],
     },
     name: 'Van Stock',
     kind: 'webapp mobile',
@@ -186,7 +187,8 @@ export const projects = [
       ]],
     ],
     faqs: [
-      ['How much does Van Stock cost?', 'Van Stock is a one-off payment of £12. There’s no subscription and no account to set up. Pay securely through Paddle’s checkout and you’ll get your download link straight away.'],
+      ['How much does Van Stock cost?', 'Van Stock is a one-off payment of £12. There’s no subscription and no account to set up. Pay securely through Paddle’s checkout and you’ll get your personal link straight away.'],
+      ['How do I install Van Stock after buying?', 'You get a personal link on screen and by email. Open it on your phone, then choose “Add to Home Screen” (iPhone, in Safari) or “Install app” (Android, in Chrome). Van Stock then opens from your home screen like any other app and works offline.'],
       ['Who handles the payment?', 'Payments are processed by Paddle, our online reseller and Merchant of Record. Paddle sends your receipt and handles any refund requests.'],
       ['Can Van Stock scan barcodes?', 'Yes. Tap the scan button and point your phone’s camera at the barcode on the part or packet. It reads common barcodes including EAN-13, UPC, Code 128, Code 39, ITF, QR codes and Data Matrix. The first time you scan a code, you tell the app which part it is, and it remembers it from then on.'],
       ['Do I need a barcode scanner?', 'No. Van Stock uses your phone’s camera, on both iPhone and Android. If you’d rather use a handheld Bluetooth barcode scanner, that works too, and you can always type the number under the barcode.'],

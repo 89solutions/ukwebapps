@@ -19,9 +19,11 @@ if (!$order) {
 }
 
 $cfg = config();
+$product = $cfg['products'][$order['product']];
 json_out([
-    'product' => $cfg['products'][$order['product']]['name'],
-    'download_url' => download_url($order),
+    'product' => $product['name'],
+    'type' => !empty($product['app']) ? 'app' : 'file',
+    'url' => access_url($order),
     'email' => $order['email'],
     'link_days' => (int) $cfg['link_days'],
     'max_downloads' => (int) $cfg['max_downloads'],
