@@ -3,32 +3,40 @@
 // (next to public_html, not inside it), then fill in the values below.
 // Never commit the real file: it contains secret keys.
 return [
-    // 'sandbox' while testing, 'production' when live. Must match the client token in src/data.mjs.
-    'paddle_environment' => 'sandbox',
+    // Stripe > Developers > API keys. Use the test key (sk_test_...) while testing, the live key (sk_live_...) when live.
+    // A restricted key also works: it needs write access to Checkout Sessions and Refunds.
+    'stripe_secret_key' => 'sk_test_xxxxxxxxxxxxxxxx',
 
-    // Paddle > Developer tools > Authentication: an API key with read access to transactions and customers.
-    'paddle_api_key' => 'pdl_sdbx_apikey_xxxxxxxxxxxxxxxx',
+    // Stripe > Developers > Webhooks: endpoint https://www.uk-web-apps.co.uk/api/stripe-webhook.php
+    // listening for checkout.session.completed, checkout.session.async_payment_succeeded and charge.refunded.
+    // Copy its signing secret. (charge.refunded switches off a refunded buyer's link automatically.)
+    'stripe_webhook_secret' => 'whsec_xxxxxxxxxxxxxxxx',
 
-    // Paddle > Developer tools > Notifications: the secret key of the destination
-    // https://www.uk-web-apps.co.uk/api/paddle-webhook.php (event: transaction.completed).
-    'paddle_webhook_secret' => 'pdl_ntfset_xxxxxxxxxxxxxxxx',
+    // Only sell to UK customers. Payments with a billing address outside the UK are refunded automatically,
+    // so you don't have to register for EU VAT.
+    'uk_only' => true,
+
+    // Ask buyers to accept the terms and waive the cancellation period at checkout.
+    // Needs a Terms of service URL (https://www.uk-web-apps.co.uk/terms/) in Stripe > Settings > Public details.
+    'require_terms_consent' => true,
 
     'site_url' => 'https://www.uk-web-apps.co.uk',
     'shop_name' => 'Toffee Apple Web',
     'from_email' => 'info@uk-web-apps.co.uk',
 
-    // Download links expire after this many days and this many downloads.
+    // Download links (file products only) expire after this many days and this many downloads.
     'link_days' => 30,
     'max_downloads' => 5,
 
-    // One entry per product. price_id comes from Paddle > Catalog > Products > (product) > Prices.
+    // One entry per product, keyed by the product's slug on the website.
+    // price_id: Stripe > Product catalogue > (product) > the £12 one-off price (price_...).
     // Hosted web apps: set 'app' and put the app's files in private/apps/<app>/. Buyers get a personal
     //   link to https://www.uk-web-apps.co.uk/apps/<app>/?key=...
     // Downloads: set 'file' instead and put the file in private/files/.
     'products' => [
         'van-stock' => [
             'name' => 'Van Stock',
-            'price_id' => 'pri_xxxxxxxxxxxxxxxxxxxxxxxxxx',
+            'price_id' => 'price_xxxxxxxxxxxxxxxxxxxxxxxx',
             'app' => 'van-stock',
             'instructions' => "To put Van Stock on your phone:\n"
                 . "- iPhone: open the link in Safari, tap the Share button, then Add to Home Screen.\n"

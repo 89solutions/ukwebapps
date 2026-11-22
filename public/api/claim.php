@@ -1,20 +1,20 @@
 <?php
-// Called by the thank-you page straight after checkout: checks the order with Paddle and returns the download link.
+// Called by the thank-you page after Stripe Checkout: checks the payment and returns the buyer's link.
 declare(strict_types=1);
 require __DIR__ . '/lib.php';
 
-$txnId = (string) ($_GET['txn'] ?? '');
-if (!preg_match('/^txn_[a-z0-9]{10,40}$/', $txnId)) fail(400, 'That order number doesn’t look right.');
+$sessionId = (string) ($_GET['session_id'] ?? '');
+if (!preg_match('/^cs_(test|live)_[A-Za-z0-9]{10,200}$/', $sessionId)) fail(400, 'That order reference doesn’t look right.');
 
 $existing = db()->prepare('SELECT * FROM orders WHERE transaction_id = ?');
-$existing->execute([$txnId]);
+$existing->execute([$sessionId]);
 $order = $existing->fetch(PDO::FETCH_ASSOC);
 
 if (!$order) {
-    $verified = verify_transaction(paddle_get('/transactions/' . rawurlencode($txnId)));
+    $verified = verify_session(stripe('GET', '/checkout/sessions/' . rawurlencode($sessionId)));
     if ($verified === null) json_out(['pending' => true], 202); // payment still processing; the page retries
-    [$product, $txn] = $verified;
-    $order = record_order($txn, $product);
+    [$product, $session] = $verified;
+    $order = record_order($session, $product);
     email_order($order);
 }
 
