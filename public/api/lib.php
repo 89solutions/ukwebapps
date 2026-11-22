@@ -1,5 +1,5 @@
 <?php
-// Shared helpers for Paddle purchases and downloads. Not called directly (blocked in .htaccess).
+// Shared helpers for Stripe purchases, hosted apps and downloads. Not called directly (blocked in .htaccess).
 declare(strict_types=1);
 
 if (basename($_SERVER['SCRIPT_FILENAME'] ?? '') === 'lib.php') { http_response_code(404); exit; }
@@ -18,19 +18,16 @@ function config(): array
     static $cfg = null;
     if ($cfg === null) {
         $cfg = require private_dir() . '/config.php';
-        $live = ($cfg['paddle_environment'] ?? 'sandbox') === 'production';
-        $cfg['api_base'] = $cfg['api_base'] ?? ($live ? 'https://api.paddle.com' : 'https://sandbox-api.paddle.com');
+        $cfg['api_base'] = $cfg['api_base'] ?? 'https://api.stripe.com';
     }
     return $cfg;
 }
 
-/** The product a Paddle price ID belongs to, or null. */
-function product_for_price(string $priceId): ?array
+/** The product config for a slug, or null. */
+function product(string $slug): ?array
 {
-    foreach (config()['products'] as $slug => $p) {
-        if (hash_equals($p['price_id'], $priceId)) return ['slug' => $slug] + $p;
-    }
-    return null;
+    $p = config()['products'][$slug] ?? null;
+    return $p ? ['slug' => $slug] + $p : null;
 }
 
 function db(): PDO
@@ -54,46 +51,65 @@ function db(): PDO
     return $pdo;
 }
 
-function paddle_get(string $path): array
+/** Calls the Stripe API. $params are sent form-encoded (Stripe's format). */
+function stripe(string $method, string $path, array $params = []): array
 {
-    $ch = curl_init(config()['api_base'] . $path);
+    $url = config()['api_base'] . '/v1' . $path;
+    $query = http_build_query($params);
+    $ch = curl_init($method === 'GET' && $query !== '' ? $url . '?' . $query : $url);
     curl_setopt_array($ch, [
         CURLOPT_RETURNTRANSFER => true,
-        CURLOPT_TIMEOUT => 15,
-        CURLOPT_HTTPHEADER => ['Authorization: Bearer ' . config()['paddle_api_key'], 'Accept: application/json'],
+        CURLOPT_TIMEOUT => 20,
+        CURLOPT_CUSTOMREQUEST => $method,
+        CURLOPT_USERPWD => config()['stripe_secret_key'] . ':',
+        CURLOPT_HTTPHEADER => ['Stripe-Version: 2024-06-20'],
     ]);
+    if ($method !== 'GET') curl_setopt($ch, CURLOPT_POSTFIELDS, $query);
     $body = curl_exec($ch);
     $status = (int) curl_getinfo($ch, CURLINFO_RESPONSE_CODE);
     curl_close($ch);
-    if ($body === false || $status >= 500) fail(502, 'Could not reach Paddle. Please try again in a minute.');
+    if ($body === false || $status >= 500 || $status === 0) fail(502, 'Could not reach our payment provider. Please try again in a minute.');
     $json = json_decode((string) $body, true);
     if ($status === 404) fail(404, 'We could not find that order.');
-    if ($status >= 400 || !is_array($json)) fail(502, 'Paddle returned an error (' . $status . ').');
-    return $json['data'] ?? [];
+    if ($status >= 400 || !is_array($json)) {
+        error_log('Stripe ' . $method . ' ' . $path . ' failed: ' . $status . ' ' . substr((string) $body, 0, 500));
+        fail(502, 'Our payment provider returned an error (' . $status . ').');
+    }
+    return $json;
 }
 
-/** Checks a transaction is paid and for one of our products. Returns [product, transaction] or null if not paid yet. */
-function verify_transaction(array $txn): ?array
+/**
+ * Checks a Stripe Checkout Session. Returns [product, session] once paid, or null while payment is still pending.
+ * Non-UK buyers are refunded automatically (we only sell to UK customers) and get an error.
+ */
+function verify_session(array $session, bool $fromWebhook = false): ?array
 {
-    $product = null;
-    foreach ($txn['items'] ?? [] as $item) {
-        $product = product_for_price((string) ($item['price']['id'] ?? $item['price_id'] ?? ''));
-        if ($product) break;
-    }
+    $product = product((string) ($session['metadata']['product'] ?? ''));
     if (!$product) fail(400, 'That order is not for a product sold here.');
-    if (!in_array($txn['status'] ?? '', ['paid', 'completed'], true)) return null;
-    return [$product, $txn];
+    if (($session['status'] ?? '') !== 'complete' || ($session['payment_status'] ?? '') !== 'paid') return null;
+    $country = (string) ($session['customer_details']['address']['country'] ?? '');
+    if (!empty(config()['uk_only']) && $country !== '' && $country !== 'GB') {
+        refund_once($session, 'Billing address outside the UK');
+        if ($fromWebhook) json_out(['refunded' => true]); // tell Stripe all is well so it doesn't retry
+        fail(403, 'Sorry, we can only sell to customers in the UK, so your payment has been refunded in full.');
+    }
+    return [$product, $session];
+}
+
+function refund_once(array $session, string $reason): void
+{
+    $pi = (string) ($session['payment_intent'] ?? '');
+    if ($pi === '') return;
+    $existing = stripe('GET', '/refunds', ['payment_intent' => $pi, 'limit' => 1]);
+    if (!empty($existing['data'])) return;
+    stripe('POST', '/refunds', ['payment_intent' => $pi, 'metadata' => ['reason' => $reason]]);
 }
 
 /** Saves the order once and returns it. Safe to call from both the thank-you page and the webhook. */
-function record_order(array $txn, array $product): array
+function record_order(array $session, array $product): array
 {
-    $id = (string) $txn['id'];
-    $email = '';
-    if (!empty($txn['customer_id'])) {
-        $customer = paddle_get('/customers/' . rawurlencode((string) $txn['customer_id']));
-        $email = (string) ($customer['email'] ?? '');
-    }
+    $id = (string) $session['id'];
+    $email = (string) ($session['customer_details']['email'] ?? '');
     db()->prepare('INSERT OR IGNORE INTO orders (transaction_id, product, email, token, created_at) VALUES (?, ?, ?, ?, ?)')
         ->execute([$id, $product['slug'], $email, bin2hex(random_bytes(24)), time()]);
     if ($email !== '') {
@@ -127,7 +143,7 @@ function email_order(array $order): void
     $body = "Thanks for buying {$product['name']}!\n\n"
         . $intro . access_url($order) . "\n\n"
         . ($product['instructions'] ?? '') . "\n\n"
-        . "Your order number is {$order['transaction_id']}. Your receipt comes separately from Paddle, our payment provider.\n\n"
+        . "Your order reference is {$order['transaction_id']}. Your payment receipt comes in a separate email.\n\n"
         . "Any questions, just reply to this email.\n\n{$cfg['shop_name']}\n{$cfg['site_url']}\n";
     $headers = 'From: ' . $cfg['shop_name'] . ' <' . $cfg['from_email'] . ">\r\n"
         . 'Reply-To: ' . $cfg['from_email'] . "\r\n"

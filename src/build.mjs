@@ -117,7 +117,6 @@ ${body}
 </main>
 ${footer()}
 <script src="/assets/js/site.js?v=${TODAY}" defer></script>${buy ? `
-<div id="paddle-config" hidden data-environment="${esc(site.paddle.environment)}" data-token="${esc(site.paddle.clientToken)}"></div>
 <script src="/assets/js/buy.js?v=${TODAY}" defer></script>` : ''}
 </body>
 </html>
@@ -149,8 +148,8 @@ const crumbs = (items) => ({
   schema: { '@type': 'BreadcrumbList', itemListElement: items.map(([href, label], i) => ({ '@type': 'ListItem', position: i + 1, name: label, item: abs(href) })) },
 });
 
-const canBuy = (p) => Boolean(p.buy && p.buy.priceId && site.paddle.clientToken);
-const buyButton = (p, cls = 'btn btn-primary') => `<button type="button" class="${cls}" data-buy data-price-id="${esc(p.buy.priceId)}" data-thanks="/work/${p.slug}/thanks/">Buy ${esc(p.name)} for ${esc(p.buy.display)}</button>`;
+const canBuy = (p) => Boolean(p.buy && site.shopOpen);
+const buyButton = (p, cls = 'btn btn-primary') => `<button type="button" class="${cls}" data-buy data-product="${esc(p.slug)}">Buy ${esc(p.name)} for ${esc(p.buy.display)}</button>`;
 const statusTag = (p) => `<span class="tag ${p.status === 'Live' ? 'green' : p.status === 'In development' ? 'red' : 'grey'}">${esc(p.status)}</span>`;
 
 const workCard = (p, lazy = true) => `<a class="work-card reveal" href="/work/${p.slug}/" data-kind="${p.kind}">
@@ -441,7 +440,7 @@ ${p.buy ? `<section class="section-sand" id="buy">
       <div class="price-card">
         <p class="price"><span>${esc(p.buy.display)}</span> one-off</p>
         ${canBuy(p) ? buyButton(p, 'btn btn-primary btn-block') : `<a class="btn btn-primary btn-block" href="/contact/?project=${encodeURIComponent(p.name)}">Register your interest</a><p class="small-print">Online checkout is coming soon.</p>`}
-        <p class="small-print">${icon('lock')} Secure checkout by Paddle, our reseller and Merchant of Record. By buying you agree to our <a href="/terms/">terms of sale</a>. <a href="/refunds/">14-day refund policy</a>.</p>
+        <p class="small-print">${icon('lock')} Secure payment by Stripe. UK customers only. By buying you agree to our <a href="/terms/">terms of sale</a>. <a href="/refunds/">14-day refund policy</a>.</p>
       </div>
     </div>
   </div>
@@ -578,7 +577,7 @@ for (const p of projects.filter((x) => x.buy)) {
     body: `<section class="hero"><div class="wrap narrow center" id="download-box">
   <span class="eyebrow">Order complete</span>
   <h1>Thanks for buying ${esc(p.name)}!</h1>
-  <p class="lead" style="max-width:600px;margin-inline:auto">${p.buy.hosted ? `Your personal ${esc(p.name)} link is below. We’ve also emailed it to you,` : `Your download is ready below. We’ve also emailed you the link,`} and Paddle will send your receipt.</p>
+  <p class="lead" style="max-width:600px;margin-inline:auto">${p.buy.hosted ? `Your personal ${esc(p.name)} link is below. We’ve also emailed it to you,` : `Your download is ready below. We’ve also emailed you the link,`} and your receipt will arrive by email.</p>
   <p id="download-status" class="form-status" role="status">Confirming your payment…</p>
   <p class="btn-row" style="justify-content:center"><a id="download-link" class="btn btn-primary" href="#" hidden>${p.buy.hosted ? 'Open' : 'Download'} ${esc(p.name)}</a><button id="copy-link" type="button" class="btn btn-ghost" hidden>Copy link</button></p>
   ${p.buy.hosted ? `<div id="install-steps" class="card" style="text-align:left;margin-top:2rem" hidden>
@@ -602,14 +601,14 @@ const legal = (path, title, description, heading, html) => layout({
   body: `<section class="hero"><div class="wrap narrow legal">${crumbs([['/', 'Home'], [path, heading]]).html}<h1>${heading}</h1><p class="lead">Last updated ${new Date(TODAY).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}</p>${html}</div></section>`,
 });
 const LEGAL_NAME = site.legalName || site.name;
-const paddleNote = `<p>Our order process is conducted by our online reseller Paddle.com. Paddle.com is the Merchant of Record for all our orders. Paddle provides all customer service inquiries and handles returns.</p>`;
 
 pages['/terms/'] = () => legal('/terms/', 'Terms of Sale | Toffee Apple Web', 'Terms of sale for apps bought from Toffee Apple Web, including how payment, delivery, licences and refunds work.', 'Terms of sale', `
 <h2>Who we are</h2>
 <p>This website is run by ${esc(LEGAL_NAME)} (“we”, “us”), trading as ${esc(site.name)} and ${esc(site.altName)}. You can contact us at <a href="mailto:${site.email}">${site.email}</a> or on ${site.phone}.</p>
 <h2>Who you are buying from</h2>
-${paddleNote}
-<p>When you buy, you also agree to <a href="https://www.paddle.com/legal/checkout-buyer-terms" rel="noopener" target="_blank">Paddle’s buyer terms</a>. Prices are shown in pounds sterling. Any tax that applies is worked out by Paddle at checkout.</p>
+<p>You are buying from us. Payments are processed securely by Stripe; we never see or store your card details. Prices are in pounds sterling and are the full price you pay. We are not registered for VAT, so no VAT is charged.</p>
+<h2>UK customers only</h2>
+<p>Our apps are currently sold to customers in the United Kingdom only, and you must give a UK billing address at checkout. If a payment is made with a billing address outside the UK, we will refund it in full automatically and access will not be provided.</p>
 <h2>What you get</h2>
 <p>After payment you get access to the app you bought:</p>
 <ul>
@@ -620,7 +619,7 @@ ${paddleNote}
 <h2>Your licence</h2>
 <p>We give you a personal, non-exclusive licence to use the app for yourself or your own business. You may not resell, share publicly or redistribute it. We, or our licensors, keep all intellectual property rights in the app.</p>
 <h2>Digital content and your right to cancel</h2>
-<p>Because the app is digital content supplied straight away, you agree at checkout that supply starts immediately. Even so, we offer refunds within 14 days, as explained in our <a href="/refunds/">refund policy</a>.</p>
+<p>Because the app is digital content supplied straight away, at checkout you ask us to supply it immediately and acknowledge that your legal right to cancel ends once access starts. Even so, we offer refunds for any reason within 14 days, as explained in our <a href="/refunds/">refund policy</a>.</p>
 <h2>If something goes wrong</h2>
 <p>The app is supplied as described on its page. If it is faulty or not as described, you have rights under the Consumer Rights Act 2015, and we will repair it, replace it or refund you. Nothing in these terms affects your statutory rights.</p>
 <p>We will keep hosted apps available for as long as we sell them. If we ever stop, we’ll email you at least 3 months beforehand so you can back up your data.</p>
@@ -632,9 +631,8 @@ ${paddleNote}
 pages['/refunds/'] = () => legal('/refunds/', 'Refund Policy | Toffee Apple Web', 'Our 14-day refund policy for apps bought from Toffee Apple Web, and how to ask for a refund.', 'Refund policy', `
 <p>We want you to be happy with your purchase. If you’re not, you can ask for a full refund within <strong>14 days</strong> of buying, for any reason.</p>
 <h2>How to ask for a refund</h2>
-<p>Email <a href="mailto:${site.email}">${site.email}</a> with your order number (it starts <code>txn_</code> and is on your receipt), or reply to your Paddle receipt email. You can also request a refund directly from Paddle at <a href="https://paddle.net" rel="noopener" target="_blank">paddle.net</a>.</p>
-${paddleNote}
-<p>Refunds go back to the original payment method, usually within 5 to 10 working days. After a refund, please delete your copy of the app.</p>
+<p>Email <a href="mailto:${site.email}">${site.email}</a> with the email address you used to buy and, if you have it, your order reference from the email we sent you. We’ll confirm your refund by email.</p>
+<p>Refunds go back to the original payment method and usually arrive within 5 to 10 working days. After a refund, your personal link is switched off; please remove the app from your phone.</p>
 <p>After 14 days, you still have your full rights under the Consumer Rights Act 2015 if the app is faulty or not as described.</p>`);
 
 pages['/privacy/'] = () => legal('/privacy/', 'Privacy Policy | Toffee Apple Web', 'How Toffee Apple Web collects, uses and protects your personal information when you contact us or buy an app.', 'Privacy policy', `
@@ -642,13 +640,13 @@ pages['/privacy/'] = () => legal('/privacy/', 'Privacy Policy | Toffee Apple Web
 <h2>What we collect and why</h2>
 <ul>
 <li><strong>Contact form:</strong> your name, phone, email and message, so we can reply to you. Messages are sent to us by text message and email.</li>
-<li><strong>Purchases:</strong> Paddle collects your payment details and billing information as Merchant of Record; we never see your card details. Paddle shares your email address and order number with us so we can send your download link and help with any problems.</li>
+<li><strong>Purchases:</strong> your name, email address and billing address, and a record of your order, so we can give you access, send your link, check you’re in the UK, and handle refunds and our accounts. Card details are collected by Stripe; we never see them.</li>
 </ul>
 <p>We keep enquiries for as long as needed to deal with them, and order records for up to 6 years for accounting purposes.</p>
 <h2>Who we share it with</h2>
-<p>Paddle (payments), our web host, and our email and SMS providers, only as needed to provide our service. We never sell your information. See <a href="https://www.paddle.com/legal/privacy" rel="noopener" target="_blank">Paddle’s privacy policy</a> for how Paddle handles your data.</p>
+<p>Stripe (payments), our web host, and our email and SMS providers, only as needed to provide our service. We never sell your information. See <a href="https://stripe.com/gb/privacy" rel="noopener" target="_blank">Stripe’s privacy policy</a> for how Stripe handles your data.</p>
 <h2>Cookies</h2>
-<p>This website doesn’t use advertising or tracking cookies. Paddle’s checkout may set cookies needed to process your payment securely. Fonts are loaded from Google Fonts.</p>
+<p>This website doesn’t use advertising or tracking cookies. When you open an app you’ve bought, we set one cookie that remembers your access so the app can load; it isn’t used for anything else. Stripe’s payment page sets cookies needed to process your payment securely and prevent fraud. Fonts are loaded from Google Fonts.</p>
 <h2>Our apps</h2>
 <p>Our apps such as Van Stock store your data on your own device. It isn’t sent to us.</p>
 <h2>Your rights</h2>

@@ -54,41 +54,51 @@ After going live, submit `https://www.uk-web-apps.co.uk/sitemap.xml` in Google S
 - One `h1` per page, descriptive alt text, width/height on images, lazy loading below the fold
 - Semantic HTML, skip link, keyboard-friendly menu, reduced-motion support
 
-## Selling apps with Paddle
+## Selling apps with Stripe
 
-Van Stock is sold for £12 through [Paddle](https://www.paddle.com) (Paddle Billing). Paddle is the Merchant of Record: it takes the payment, sends the receipt, handles refunds and works out any VAT, so you don't need to be VAT registered.
+Van Stock is sold for £12 (one-off) with [Stripe Checkout](https://stripe.com/payments/checkout). Buyers get a personal link to a copy of Van Stock hosted on this site. (Paddle was tried first but doesn't accept domains that also sell services.)
+
+Stripe only processes the payment: **you are the seller**. That means:
+- **Receipts:** turn on Stripe's automatic receipts (Settings > Customer emails > Successful payments).
+- **Refunds:** done by you in the Stripe dashboard. The buyer's link switches off automatically.
+- **VAT:** you're not VAT registered, so no VAT is charged. Sales count towards the £90,000 UK registration threshold.
+- **UK only:** to avoid EU VAT rules, checkout requires a billing address, and any payment from outside the UK is **refunded automatically** (`uk_only` in the config).
 
 ### How it works
 
-1. The buyer clicks **Buy Van Stock for £12** on `/work/van-stock/`. Paddle's checkout opens over the page (`public/assets/js/buy.js`).
-2. After payment they're sent to `/work/van-stock/thanks/?txn=…`. That page calls `/api/claim.php`, which checks the order with Paddle's API and shows an **Open Van Stock** button with install steps.
-3. Paddle also calls `/api/paddle-webhook.php`, which emails the buyer their personal link, so it still arrives if they close the browser.
-4. The link is `/apps/van-stock/?key=…`. `.htaccess` sends everything under `/apps/van-stock/` through `/api/app.php`. That script checks the key, sets a cookie so the app's files load, and serves the app from `private/apps/van-stock/`. The key is written into the app's start address too, so the home-screen app keeps access on iPhone, where it doesn't share Safari's cookies. Once installed, the app works offline as normal.
+1. The buyer clicks **Buy Van Stock for £12** on `/work/van-stock/`. `public/assets/js/buy.js` asks `/api/checkout.php` to create a Stripe Checkout Session, then sends the buyer to Stripe's payment page. At checkout, buyers tick to accept the terms and ask for immediate supply, which is needed for digital content under UK consumer law.
+2. After paying, Stripe sends them to `/work/van-stock/thanks/?session_id=…`. That page calls `/api/claim.php`, which checks the payment with Stripe and shows an **Open Van Stock** button with install steps.
+3. Stripe also calls `/api/stripe-webhook.php`, which emails the buyer their personal link, so it still arrives if they close the browser. Refunds made in Stripe (`charge.refunded`) switch off the link.
+4. The link is `/apps/van-stock/?key=…`. `.htaccess` sends everything under `/apps/van-stock/` through `/api/app.php`. That script checks the key, sets a cookie so the app's files load, and serves the app from `private/apps/van-stock/`. The key is written into the app's start address too, so the home-screen app keeps access on iPhone. Once installed, the app works offline as normal.
 5. Anyone without a valid key sees a "Van Stock is for customers" page with a link to buy it.
 
-To switch off a buyer's access (e.g. after a refund), set `revoked = 1` on their row in `private/orders.sqlite`. Copies already installed keep working offline, but can't refresh from the server.
+You can also switch off access by hand: set `revoked = 1` on the buyer's row in `private/orders.sqlite`. Copies already installed keep working offline, but can't refresh from the server.
 
-Products can also be sold as file downloads instead: give them a `file` rather than an `app` in `private/config.php`. `/api/download.php?token=…` then serves the file, with links that expire after 30 days and 5 downloads (configurable).
+Products can also be sold as file downloads: give them a `file` rather than an `app` in `private/config.php`. `/api/download.php?token=…` then serves the file, with links that expire after 30 days and 5 downloads (configurable).
 
-Orders are saved in `private/orders.sqlite`. Needs PHP 8.1+ with `pdo_sqlite` and `curl`, and the host must be able to send mail with PHP `mail()`.
+Needs PHP 8.1+ with `pdo_sqlite` and `curl`, and the host must be able to send mail with PHP `mail()`.
 
 ### Setting it up
 
-1. **Paddle account:** sign up at paddle.com. Paddle reviews your website before you can take live payments. It needs to see the product, price, [terms](public/terms/), [refund policy](public/refunds/) and [privacy policy](public/privacy/), which are all on the site.
-2. **Test in the sandbox first** (sandbox-vendors.paddle.com, a separate account):
-   - **Catalog > Products:** add "Van Stock" with a one-time price of £12.00. Set the tax mode so the price *includes* tax, so buyers pay exactly £12.
-   - **Checkout > Checkout settings:** set the default payment link to `https://www.uk-web-apps.co.uk/work/van-stock/`.
-   - **Developer tools > Authentication:** create a **client-side token** and an **API key**.
-   - **Developer tools > Notifications:** add a destination `https://www.uk-web-apps.co.uk/api/paddle-webhook.php` for the `transaction.completed` event, and copy its secret key.
-3. **Website settings** in `src/data.mjs`: put the client-side token in `site.paddle.clientToken` and the price ID (`pri_…`) in the Van Stock `buy.priceId`, then run `node src/build.mjs`. The Buy button appears once both are set. Until then the page shows "Register your interest".
-4. **Private folder:** copy `private-example/` to the server as `private/`, **one level above the web root** (next to `public_html`, not inside it). Fill in `private/config.php` with the API key, webhook secret and price ID. Then put the Van Stock app in `private/apps/van-stock/`: run `src/tools/package-van-stock.sh /path/to/vans` and upload the contents of `dist/apps/van-stock/`. If your host doesn't allow folders outside the web root, put it at `public_html/private/`; `.htaccess` blocks it from the web.
-5. **Test a purchase** in the sandbox with Paddle's test card `4242 4242 4242 4242`. Check the link opens Van Stock, that it installs to a phone's home screen (try an iPhone and an Android if you can), and that the email arrives.
-6. **Go live:** repeat step 2 in your live Paddle account. Set `environment: 'production'` with the live client token and live price ID in `src/data.mjs`, and `'production'` with the live API key, webhook secret and price ID in `private/config.php`. Rebuild and upload.
+1. **Stripe account:** sign up at stripe.com as a sole trader or company and complete the identity checks. Everything below can be done in **test mode** first (toggle at the top of the dashboard).
+2. **Product:** Product catalogue > Add product: "Van Stock", one-off price **£12.00 GBP**. Copy the price ID (`price_…`).
+3. **Settings:**
+   - Settings > Public details: set the **Terms of service** URL to `https://www.uk-web-apps.co.uk/terms/` and the **Privacy policy** URL to `/privacy/`. Checkout's terms tick-box needs these.
+   - Settings > Customer emails: turn on receipts for successful payments.
+4. **Webhook:** Developers > Webhooks > Add endpoint `https://www.uk-web-apps.co.uk/api/stripe-webhook.php`, with the events `checkout.session.completed`, `checkout.session.async_payment_succeeded` and `charge.refunded`. Copy its signing secret (`whsec_…`).
+5. **Private folder:** copy `private-example/` to the server as `private/`, **one level above the web root** (next to `public_html`, not inside it). Fill in `private/config.php`: the secret key (Developers > API keys, `sk_test_…` or `sk_live_…`), the webhook secret and the price ID. Then run `src/tools/package-van-stock.sh /path/to/vans` and upload the contents of `dist/apps/van-stock/` to `private/apps/van-stock/`. If your host doesn't allow folders outside the web root, use `public_html/private/`; `.htaccess` blocks it from the web.
+6. **Open the shop:** set `shopOpen: true` in `src/data.mjs`, run `node src/build.mjs` and upload `public/`. Until then the page shows "Register your interest".
+7. **Test a purchase** in test mode with card `4242 4242 4242 4242`, any future expiry date and any CVC, and a UK postcode. Check:
+   - the link opens Van Stock and installs to a phone's home screen (try an iPhone and an Android if you can)
+   - the email arrives
+   - a refund in Stripe switches the link off
+   - a non-UK billing country is refunded automatically
+8. **Go live:** repeat steps 2–4 with test mode off. Put the live secret key, webhook secret and price ID in `private/config.php`.
 
 To sell another app, add a `buy` block to its project in `src/data.mjs` and a matching entry under `products` in `private/config.php`.
+
+**Never commit `private/`**: it holds secret keys and customer emails. It's in `.gitignore`.
 
 ### Updating the hosted Van Stock
 
 When Van Stock changes, re-run `src/tools/package-van-stock.sh /path/to/vans` and upload the files to `private/apps/van-stock/` again. Buyers get the update the next time they open the app with signal. Remember to bump `CACHE` in the app's `sw.js` with each release, as usual.
-
-**Never commit `private/`**: it holds secret keys and customer emails. It's in `.gitignore`.

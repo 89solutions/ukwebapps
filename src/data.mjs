@@ -9,12 +9,8 @@ export const site = {
   email: 'info@uk-web-apps.co.uk',
   area: 'Newcastle upon Tyne & the North East',
   blog: '/blog/',
-  // Paddle checkout. Use a sandbox client token (test_...) while testing, then a live one (live_...)
-  // and environment 'production'. Leave the token empty to hide Buy buttons.
-  paddle: {
-    environment: 'sandbox',
-    clientToken: '',
-  },
+  // Online shop (Stripe). Set to true once private/config.php is set up on the server, to show Buy buttons.
+  shopOpen: false,
 };
 
 // kind: used by the portfolio filters (website | webapp | mobile)
@@ -104,9 +100,9 @@ export const projects = [
   },
   {
     slug: 'van-stock',
-    // Sold through Paddle. priceId comes from Paddle > Catalog > Products > Van Stock > Prices.
+    // Sold through Stripe Checkout. The Stripe price ID lives in private/config.php on the server.
     buy: {
-      price: 12, currency: 'GBP', display: '£12', priceId: '',
+      price: 12, currency: 'GBP', display: '£12',
       hosted: true, // buyers get a personal link to the copy we host at /apps/van-stock/
       label: 'One-off payment',
       includes: ['Your own personal Van Stock link, straight away', 'Installs to your phone’s home screen in seconds', 'All 15 trade lists and barcode scanning', 'Works offline, no account or subscription'],
@@ -187,9 +183,9 @@ export const projects = [
       ]],
     ],
     faqs: [
-      ['How much does Van Stock cost?', 'Van Stock is a one-off payment of £12. There’s no subscription and no account to set up. Pay securely through Paddle’s checkout and you’ll get your personal link straight away.'],
+      ['How much does Van Stock cost?', 'Van Stock is a one-off payment of £12. There’s no subscription and no account to set up. Pay securely by card (or Apple Pay and Google Pay where available) through Stripe and you’ll get your personal link straight away. Van Stock is currently available to UK customers only.'],
       ['How do I install Van Stock after buying?', 'You get a personal link on screen and by email. Open it on your phone, then choose “Add to Home Screen” (iPhone, in Safari) or “Install app” (Android, in Chrome). Van Stock then opens from your home screen like any other app and works offline.'],
-      ['Who handles the payment?', 'Payments are processed by Paddle, our online reseller and Merchant of Record. Paddle sends your receipt and handles any refund requests.'],
+      ['Who handles the payment?', 'Payments are processed securely by Stripe, so we never see your card details. You’ll get a receipt by email, and refunds within 14 days are handled by us. Just email us.'],
       ['Can Van Stock scan barcodes?', 'Yes. Tap the scan button and point your phone’s camera at the barcode on the part or packet. It reads common barcodes including EAN-13, UPC, Code 128, Code 39, ITF, QR codes and Data Matrix. The first time you scan a code, you tell the app which part it is, and it remembers it from then on.'],
       ['Do I need a barcode scanner?', 'No. Van Stock uses your phone’s camera, on both iPhone and Android. If you’d rather use a handheld Bluetooth barcode scanner, that works too, and you can always type the number under the barcode.'],
       ['Does Van Stock work without signal?', 'Yes. Once it’s been opened, Van Stock works fully offline, including barcode scanning, so you can record parts in lofts, basements and sites with no coverage.'],
