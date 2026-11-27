@@ -24,6 +24,7 @@ A static site with no framework. Pages are generated from `src/data.mjs` by a sm
 
 - `/` home, `/services/`, `/work/` (portfolio with filters), `/about/`, `/contact/`, `/404.html`
 - `/tools/bookmarklets/`: free drag-to-bookmarks-bar tools (linked from the footer)
+- `/games/lunch-rush/`: Lunch Rush, a free food truck game (linked from the footer). The game is hand-written in `public/assets/js/lunch-rush.js` and `public/assets/css/lunch-rush.css`; the page around it is in `src/build.mjs`
 - One page per project under `/work/<slug>/`: TruckFood, Whitfield Electrical, D&J Plumbing and Heating, Van Stock, MapGoals, Tea and Company, Residents’ Documents, File Vault, Missing Child Locator
 
 ## Editing

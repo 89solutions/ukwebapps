@@ -138,7 +138,7 @@ function footer() {
       </div>
       <div><h2>Services</h2><ul>${svc}</ul></div>
       <div><h2>Our work</h2><ul>${work}</ul></div>
-      <div><h2>Company</h2><ul><li><a href="/about/">About us</a></li><li><a href="/work/">Portfolio</a></li><li><a href="${site.blog}">Blog</a></li><li><a href="/contact/">Contact</a></li><li><a href="/tools/bookmarklets/">Free bookmarklets</a></li><li><a href="/terms/">Terms of sale</a></li><li><a href="/refunds/">Refund policy</a></li><li><a href="/privacy/">Privacy policy</a></li></ul></div>
+      <div><h2>Company</h2><ul><li><a href="/about/">About us</a></li><li><a href="/work/">Portfolio</a></li><li><a href="${site.blog}">Blog</a></li><li><a href="/contact/">Contact</a></li><li><a href="/tools/bookmarklets/">Free bookmarklets</a></li><li><a href="/games/lunch-rush/">Lunch Rush game</a></li><li><a href="/terms/">Terms of sale</a></li><li><a href="/refunds/">Refund policy</a></li><li><a href="/privacy/">Privacy policy</a></li></ul></div>
     </div>
     <div class="foot-base"><span>© <span id="year">${new Date().getFullYear()}</span> ${esc(site.name)} (${esc(site.altName)}). All rights reserved.</span><span>Made in the North East with toffee and apples.</span></div>
   </div>
@@ -660,6 +660,54 @@ document.querySelectorAll('.bm-copy').forEach(function (b) {
   });
 });
 </script>`,
+  });
+};
+
+
+// ---------- Lunch Rush game ----------
+pages['/games/lunch-rush/'] = () => {
+  const c = crumbs([['/', 'Home'], ['/games/lunch-rush/', 'Lunch Rush']]);
+  const truck = bySlug.truckfood;
+  return layout({
+    path: '/games/lunch-rush/',
+    title: 'Lunch Rush: a Free Food Truck Game | Toffee Apple Web',
+    description: 'Run the hatch of a busy food truck in this free browser game. Grill burgers, fry chips and serve the lunchtime queue before they walk off. No download needed.',
+    schema: [c.schema, { '@type': 'VideoGame', name: 'Lunch Rush', url: abs('/games/lunch-rush/'), description: 'A free food truck cooking game that runs in your browser.', genre: ['Cooking', 'Time management', 'Casual'], gamePlatform: 'Web browser', applicationCategory: 'Game', operatingSystem: 'Any', isAccessibleForFree: true, offers: { '@type': 'Offer', price: '0', priceCurrency: 'GBP' }, author: { '@id': orgId }, inLanguage: 'en-GB' }],
+    body: `
+<link rel="stylesheet" href="/assets/css/lunch-rush.css?v=${TODAY}">
+<section class="hero" style="padding-bottom:1.5rem"><div class="wrap narrow">
+  ${c.html}
+  <span class="eyebrow">Free game</span>
+  <h1>Lunch Rush</h1>
+  <p class="lead">It’s noon and the queue is building. Grill the burgers, fry the chips and keep everyone fed at <strong>The Toffee Apple</strong> food truck. How long can you last?</p>
+</div></section>
+<section style="padding-top:0"><div class="wrap">
+  <div class="lr" id="lunch-rush"><noscript><p style="padding:2rem;text-align:center">Lunch Rush needs JavaScript turned on to play.</p></noscript></div>
+  <p class="small-print" style="text-align:center;margin-top:1rem">Works on phones, tablets and computers. On a keyboard: <kbd>G</kbd> grill a burger, <kbd>F</kbd> fryer, <kbd>Space</kbd> pick up what’s cooked, letters for the shelf, <kbd>1</kbd>–<kbd>4</kbd> serve, <kbd>Esc</kbd> pause.</p>
+</div></section>
+<section class="section-sand"><div class="wrap narrow">
+  <div class="section-head"><h2>How to play</h2></div>
+  <ol>
+    <li><strong>Read the order.</strong> Each customer shows what they want in a speech bubble. Their bar shows how patient they are.</li>
+    <li><strong>Cook.</strong> Tap Burger or Sausage to put one on the grill, and tap a fryer basket for chips. Pick them up when they say <em>Ready</em>. Leave them too long and they burn.</li>
+    <li><strong>Build the tray.</strong> Add buns, rolls, cheese, onions, pop and toffee apples from the shelf. Tap anything on the tray to bin it.</li>
+    <li><strong>Serve.</strong> When the tray matches an order, that customer’s bubble glows green. Tap them to serve. Quick service earns bigger tips.</li>
+    <li><strong>Survive the rush.</strong> Each day runs from 12 till 2. New food arrives as the days go on, and the queue gets busier. Three walk-outs and the hatch closes.</li>
+  </ol>
+  <p>Your best score is saved on your device, so you can keep trying to beat it.</p>
+</div></section>
+<section><div class="wrap narrow">
+  <div class="card" style="display:flex;gap:1.4rem;align-items:center;flex-wrap:wrap">
+    <a href="/work/truckfood/" style="flex:1 1 220px"><img src="/assets/img/work/${truck.image}" alt="${esc(truck.imageAlt)}" width="1280" height="800" loading="lazy" style="border-radius:12px;border:1px solid var(--line)"></a>
+    <div style="flex:2 1 280px">
+      <h2 style="font-size:1.4rem">Hungry for the real thing?</h2>
+      <p>We also built <a href="/work/truckfood/">TruckFood</a>, a web app that shows which food trucks are open near you right now, with live locations, menus and street food events across the UK.</p>
+      <a class="btn btn-ghost" href="${truck.url}" rel="noopener" target="_blank">Find a food truck near you</a>
+    </div>
+  </div>
+</div></section>
+${ctaBand('Want a game or interactive feature for your site?', 'Little games and tools like this keep visitors around and get shared. Tell us what you have in mind.')}
+<script src="/assets/js/lunch-rush.js?v=${TODAY}" defer></script>`,
   });
 };
 
