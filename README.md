@@ -16,12 +16,14 @@ A static site with no framework. Pages are generated from `src/data.mjs` by a sm
 | `public/.htaccess` | HTTPS/www redirects, `index.html` before the old `index.php`, 404 page, caching, compression |
 | `src/data.mjs` | All the content: projects, services, FAQs, contact details |
 | `src/build.mjs` | Generates every HTML page, `sitemap.xml` and `robots.txt` |
+| `src/bookmarklets.mjs` | The free bookmarklets on `/tools/bookmarklets/` (each is a plain function, turned into a `javascript:` link at build time) |
 | `src/tools/og-images.cjs` | Regenerates social share images (needs Playwright) |
 | `src/art/` | Source SVGs for illustrated project images |
 
 ## Pages
 
 - `/` home, `/services/`, `/work/` (portfolio with filters), `/about/`, `/contact/`, `/404.html`
+- `/tools/bookmarklets/`: free drag-to-bookmarks-bar tools (linked from the footer)
 - One page per project under `/work/<slug>/`: TruckFood, Whitfield Electrical, D&J Plumbing and Heating, Van Stock, MapGoals, Tea and Company, Residents’ Documents, File Vault, Missing Child Locator
 
 ## Editing

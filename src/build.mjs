@@ -4,6 +4,7 @@ import { mkdirSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { site, projects, earlier, services, faqs } from './data.mjs';
+import { groups as bmGroups, bookmarklets } from './bookmarklets.mjs';
 
 const OUT = join(dirname(fileURLToPath(import.meta.url)), '..', 'public');
 const TODAY = new Date().toISOString().slice(0, 10);
@@ -137,7 +138,7 @@ function footer() {
       </div>
       <div><h2>Services</h2><ul>${svc}</ul></div>
       <div><h2>Our work</h2><ul>${work}</ul></div>
-      <div><h2>Company</h2><ul><li><a href="/about/">About us</a></li><li><a href="/work/">Portfolio</a></li><li><a href="${site.blog}">Blog</a></li><li><a href="/contact/">Contact</a></li><li><a href="/terms/">Terms of sale</a></li><li><a href="/refunds/">Refund policy</a></li><li><a href="/privacy/">Privacy policy</a></li></ul></div>
+      <div><h2>Company</h2><ul><li><a href="/about/">About us</a></li><li><a href="/work/">Portfolio</a></li><li><a href="${site.blog}">Blog</a></li><li><a href="/contact/">Contact</a></li><li><a href="/tools/bookmarklets/">Free bookmarklets</a></li><li><a href="/terms/">Terms of sale</a></li><li><a href="/refunds/">Refund policy</a></li><li><a href="/privacy/">Privacy policy</a></li></ul></div>
     </div>
     <div class="foot-base"><span>© <span id="year">${new Date().getFullYear()}</span> ${esc(site.name)} (${esc(site.altName)}). All rights reserved.</span><span>Made in the North East with toffee and apples.</span></div>
   </div>
@@ -595,6 +596,72 @@ for (const p of projects.filter((x) => x.buy)) {
 </div></section>`,
   });
 }
+
+
+// ---------- Bookmarklets ----------
+// Turns a `run() {...}` method from bookmarklets.mjs into a javascript: URL.
+const bmHref = (b) => {
+  const src = b.run.toString().replace(/^run\s*\(/, 'function (').replace(/\n\s*/g, '\n');
+  return 'javascript:' + encodeURIComponent(`(${src})();void 0`);
+};
+const bmFaqs = [
+  ['What is a bookmarklet?', 'A bookmark that runs a small piece of code on the page you’re looking at, instead of opening a website. It works like a mini browser extension, but needs no install, has no access to your other tabs and only runs when you click it.'],
+  ['Are these safe?', 'Yes. Each one only runs on the page you click it on, and only when you click it. None of them send your browsing anywhere, apart from the ones that open another site on purpose (search, Companies House, the Wayback Machine, CamelCamelCamel, Google Maps) and the QR code, which sends the page address to a free QR service to draw the code. You can read the code for any of them with “Show code”.'],
+  ['Why doesn’t one work on a particular site?', 'Some sites, such as banks and GitHub, have strict security settings that block all bookmarklets. That’s the site protecting itself, and there’s nothing wrong with the bookmarklet.'],
+  ['Do they work on phones?', 'Yes, though it’s fiddlier. Bookmark any page, then edit the bookmark and paste the copied code in place of its address. To run it, start typing the bookmark’s name in the address bar and tap it in the suggestions (Chrome on Android), or open it from your bookmarks (Safari on iPhone).'],
+  ['Can you make one for my business?', 'Yes. If your team repeats the same steps on a website every day, such as copying details from one system into another, a bookmarklet or small web app can often do it in one click. Get in touch and tell us what you do.'],
+];
+
+pages['/tools/bookmarklets/'] = () => {
+  const c = crumbs([['/', 'Home'], ['/tools/bookmarklets/', 'Free bookmarklets']]);
+  return layout({
+    path: '/tools/bookmarklets/',
+    title: 'Free Bookmarklets: One-Click Browser Tools | Toffee Apple Web',
+    description: `${bookmarklets.length} free one-click browser tools: remove pop-ups, dark mode, clean links, add VAT, price per kg, Companies House lookup and more.`,
+    schema: [c.schema, faqSchema(bmFaqs)],
+    body: `
+<section class="hero">
+  <div class="wrap narrow">
+    ${c.html}
+    <span class="eyebrow">Free tools</span>
+    <h1>Bookmarklets: handy one-click browser tools</h1>
+    <p class="lead">Small tools that live on your bookmarks bar. Click one and it does its job on whatever page you’re looking at: no extension to install, nothing to sign up for.</p>
+    <div class="card bm-how">
+      <h2>How to add one</h2>
+      <ol>
+        <li>Show your bookmarks bar: press <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>B</kbd> (<kbd>⌘</kbd>+<kbd>Shift</kbd>+<kbd>B</kbd> on a Mac).</li>
+        <li>Drag a red button below onto the bar.</li>
+        <li>On any website, click it on your bookmarks bar.</li>
+      </ol>
+      <p class="small-print">You can try any of them on this page by clicking the red button. On a phone, use “Copy code” and see <a href="#faq">the questions below</a>.</p>
+    </div>
+    <div class="btn-row" style="margin-top:1.5rem">${bmGroups.map((g) => `<a class="tag" style="font-size:.85rem;padding:.45rem .9rem;text-decoration:none" href="#${g.id}">${esc(g.name)}</a>`).join('')}</div>
+  </div>
+</section>
+${bmGroups.map((g, gi) => `<section id="${g.id}"${gi % 2 ? '' : ' class="section-sand"'}><div class="wrap">
+  <div class="section-head"><span class="icon">${icon(g.icon)}</span><h2 style="margin-top:1rem">${esc(g.name)}</h2></div>
+  <div class="grid grid-3 bm-grid">${bookmarklets.filter((b) => b.group === g.id).map((b) => `<article class="card bm">
+    <a class="bm-link" href="${bmHref(b)}" draggable="true" title="Drag me to your bookmarks bar">${esc(b.name)}</a>
+    <p>${esc(b.desc)}</p>
+    <div class="bm-actions"><button type="button" class="bm-copy" data-code="${esc(decodeURIComponent(bmHref(b)))}">Copy code</button><details><summary>Show code</summary><pre><code>${esc(b.run.toString().replace(/^run\s*\(/, 'function ('))}</code></pre></details></div>
+  </article>`).join('')}</div>
+</div></section>`).join('\n')}
+<section id="faq"><div class="wrap narrow">
+  <div class="section-head"><h2>Questions</h2></div>
+  ${faqBlock(bmFaqs)}
+</div></section>
+${ctaBand('Want a tool made for your business?', 'If your team does the same fiddly job on a website every day, we can usually make it one click. Tell us what you need.')}
+<script>
+document.querySelectorAll('.bm-copy').forEach(function (b) {
+  b.addEventListener('click', function () {
+    var done = function () { b.textContent = 'Copied'; setTimeout(function () { b.textContent = 'Copy code'; }, 1600); };
+    if (navigator.clipboard) navigator.clipboard.writeText(b.dataset.code).then(done, function () { prompt('Copy this:', b.dataset.code); });
+    else prompt('Copy this:', b.dataset.code);
+  });
+});
+</script>`,
+  });
+};
 
 const legal = (path, title, description, heading, html) => layout({
   path, title, description,
