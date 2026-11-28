@@ -292,3 +292,21 @@ section { padding: clamp(3.5rem, 8vw, 6rem) 0; }
 button.btn:disabled { opacity: .7; cursor: progress; }
 @media (max-width: 800px) { .price-box { grid-template-columns: 1fr; } }
 .legal h2 { font-size: 1.35rem; margin-top: 2rem; }
+
+/* Bookmarklets page */
+.bm-how { margin-top: 2rem; }
+.bm-how h2 { font-size: 1.3rem; }
+.bm-how ol { margin: 0 0 1rem; padding-left: 1.3rem; }
+kbd { font: 600 .85em/1 var(--font); background: var(--sand); border: 1px solid var(--line); border-bottom-width: 2px; border-radius: 6px; padding: .15em .45em; }
+.bm { display: flex; flex-direction: column; min-width: 0; }
+.bm-link + p { margin-top: 1rem; }
+.bm p { flex: 1; }
+.bm-link { align-self: flex-start; display: inline-flex; align-items: center; gap: .45rem; background: var(--apple); color: #fff; font-weight: 700; text-decoration: none; padding: .6rem 1.1rem; border-radius: 999px; cursor: grab; box-shadow: 0 8px 18px -10px rgba(200, 51, 43, .9); }
+.bm-link::before { content: "★"; font-size: .9em; }
+.bm-link:hover { color: #fff; background: #a92820; }
+.bm-link:active { cursor: grabbing; }
+.bm-actions { display: flex; flex-wrap: wrap; gap: .6rem 1rem; align-items: baseline; font-size: .9rem; }
+.bm-copy { font: 700 .9rem var(--font); color: var(--toffee-strong); background: none; border: 0; padding: 0; cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }
+.bm-actions details { flex-basis: 100%; min-width: 0; max-width: 100%; }
+.bm-actions summary { cursor: pointer; color: var(--toffee-strong); font-weight: 700; display: inline; }
+.bm-actions pre { margin: .6rem 0 0; max-height: 260px; overflow: auto; background: var(--ink); color: #f6ece0; padding: .9rem; border-radius: var(--radius-sm); font-size: .78rem; line-height: 1.5; }
